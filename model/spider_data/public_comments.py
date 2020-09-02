@@ -75,7 +75,7 @@ def shop_infos():
     shop_name = list(filter(None, shop_name))
     shopName = ''
     for n in shop_name:
-        shopName+=n
+        shopName += n
 
     # 地址
     address = html.xpath(
@@ -85,11 +85,13 @@ def shop_infos():
     address_real = ''
     for f in address:
         address_real += f
+
     # 人均价格
     price = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="avgPriceTitle"]//text()')
     price_unit = ''
     for n in price:
         price_unit += n
+        
     # 公共评分
     comment_score = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="comment_score"]//text()')
     comment_score = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in comment_score]
@@ -97,6 +99,7 @@ def shop_infos():
     commentScore = ''
     for s in comment_score:
         commentScore += s
+
     # 电话
     telephone = html.xpath('.//div[@id="basic-info"]//p[@class="expand-info tel"]//text()')
     telephone = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in telephone]
