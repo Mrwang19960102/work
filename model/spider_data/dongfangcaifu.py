@@ -3,12 +3,8 @@
 # @Date:       |   2020/9/10 13:42
 # @Author:     |   ThinkPad
 # @Desc:       |   东方财富网数据抓取
-import re
-import time
 import requests
 from lxml import etree
-import pandas as pd
-from datetime import datetime
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
