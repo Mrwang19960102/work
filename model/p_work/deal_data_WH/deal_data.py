@@ -42,19 +42,26 @@ def deal_data():
                         '9月汽车拉新进度表', '9月游戏拉新进度表', '9月音乐拉新进度表',
                         'VLOG拉新', '拉新一号分部', '拉新二号分部', '拉新三号分部']
     df_list = []
+    name_list = []
     for source_file in source_file_list:
-        df = pd.ExcelFile('./data_source/{}.xlsx'.format(source_file))
+        df = pd.ExcelFile('./source_data/{}.xlsx'.format(source_file))
         sheet_name_list = df.sheet_names
-        for sheet in sheet_name_list:
-            if sheet in all_name_sheet:
-                data_df = pd.read_excel('./data_source/{}.xlsx'.format(source_file), sheet_name=sheet, index_col=0)
+        name_list.extend(sheet_name_list)
+        sheet_name_list_t = []
+        for name in name_list:
+            if name not in sheet_name_list_t:
+                if '数据监控' not in name and '入驻' not in name and '线索' not in name and '发文' not in name and '未断更老作者' not in name:
+                    sheet_name_list_t.append(name)
+        print(len(sheet_name_list_t),sheet_name_list_t)
+        for sheet in sheet_name_list_t:
+            data_df = pd.read_excel('./source_data/{}.xlsx'.format(source_file), sheet_name=sheet, index_col=0)
+            if not data_df.empty:
                 check_df = data_df[data_df['作者拉新状态'].isin(['已发文', '已激活', '已入驻'])]
                 if not check_df.empty:
                     print('文件={}，sheet={}数据提取完成'.format(source_file, sheet))
                     check_df['Name'] = sheet
                     check_df['文件名'] = source_file
                     check_df.columns = [str(x) for x in check_df.columns.tolist()]
-                    print(check_df.columns)
                     check_df = check_df.loc[:, ~check_df.columns.str.contains('^Unnamed')]
                     df_list.append(check_df)
                 else:
@@ -69,8 +76,4 @@ def deal_data():
 
 
 if __name__ == '__main__':
-    all_name_sheet = ['谢普庆', '韦彩花', '魏鹭饶', '笑笑', '邹佳益', '黄潇逸', '韩清华', '朱晨婧', '张清倪', '徐安琪', '宋雨欣', '齐聪艺', '徐庆洛', '苏欢',
-                      '金梦暄', '高洁', '王欣雨', '陈珊', '张晓菁', '许安然', '聂云', '宋泽矩', '刘研', '李雨忻', '乌云其木格', '汪欣', '刘婷', '徐雅芳',
-                      '林依玫', '黄诗雨', '洪惠琪', '徐鑫', '刘欣', '刘俏', '李梓萌', '林湘凝', '刘倩', '胡雨涵', '张锦娉', '郑淇丹', '祝琦', '岳璐', '沈泽轩',
-                      '邓钥衡', '刘超', '周小洲', '陈洁', '黄成妍', '俞佳琦', '郑鑫']
     deal_data()
