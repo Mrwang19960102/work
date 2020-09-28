@@ -43,8 +43,9 @@ def deal_data():
                         'VLOG拉新', '拉新一号分部', '拉新二号分部', '拉新三号分部']
     df_list = []
     name_list = []
+    sheet_name_list_t = []
     for source_file in source_file_list:
-        df = pd.ExcelFile('./source_data/{}.xlsx'.format(source_file))
+        df = pd.ExcelFile('./data_source/{}.xlsx'.format(source_file))
         sheet_name_list = df.sheet_names
         name_list.extend(sheet_name_list)
         sheet_name_list_t = []
@@ -52,20 +53,23 @@ def deal_data():
             if name not in sheet_name_list_t:
                 if '数据监控' not in name and '入驻' not in name and '线索' not in name and '发文' not in name and '未断更老作者' not in name:
                     sheet_name_list_t.append(name)
-        print(len(sheet_name_list_t),sheet_name_list_t)
-        for sheet in sheet_name_list_t:
-            data_df = pd.read_excel('./source_data/{}.xlsx'.format(source_file), sheet_name=sheet, index_col=0)
-            if not data_df.empty:
-                check_df = data_df[data_df['作者拉新状态'].isin(['已发文', '已激活', '已入驻'])]
-                if not check_df.empty:
-                    print('文件={}，sheet={}数据提取完成'.format(source_file, sheet))
-                    check_df['Name'] = sheet
-                    check_df['文件名'] = source_file
-                    check_df.columns = [str(x) for x in check_df.columns.tolist()]
-                    check_df = check_df.loc[:, ~check_df.columns.str.contains('^Unnamed')]
-                    df_list.append(check_df)
-                else:
-                    print('文件={}，sheet={}中没有筛选出符合数据'.format(source_file, sheet))
+    for source_file in source_file_list:
+        data_df = pd.ExcelFile('./data_source/{}.xlsx'.format(source_file))
+        every_df_sheet = data_df.sheet_names
+        for sheet in every_df_sheet:
+            if sheet in sheet_name_list_t:
+                data_df = pd.read_excel('./data_source/{}.xlsx'.format(source_file), sheet_name=sheet, index_col=0)
+                if not data_df.empty:
+                    check_df = data_df[data_df['作者拉新状态'].isin(['已发文', '已激活', '已入驻'])]
+                    if not check_df.empty:
+                        print('文件={}，sheet={}数据提取完成'.format(source_file, sheet))
+                        check_df['Name'] = sheet
+                        check_df['文件名'] = source_file
+                        check_df.columns = [str(x) for x in check_df.columns.tolist()]
+                        check_df = check_df.loc[:, ~check_df.columns.str.contains('^Unnamed')]
+                        df_list.append(check_df)
+                    else:
+                        print('文件={}，sheet={}中没有筛选出符合数据'.format(source_file, sheet))
     if df_list:
         time = datetime.strftime(datetime.now(), '%Y-%m-%d%H%M%S')
         file_name = './export_data/resultsDdf' + time + '.xlsx'
