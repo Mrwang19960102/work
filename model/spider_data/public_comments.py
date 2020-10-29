@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
-# @File:       |   public_comments.py 
+# @File:       |   public_comments.py
 # @Date:       |   2020/8/31 9:31
 # @Author:     |   ThinkPad
 # @Desc:       |  大众网评  评论
+import os
 import re
 import time
 import math
 import copy
+import random
 import requests
 import pandas as pd
 from lxml import etree
 from datetime import datetime
-from model.spider_data import tools
+from multiprocessing import Pool
+# from fake_useragent import UserAgent
+from model.spider_data import tools, conf
+
+from model.spider_data import dianping_test
 
 headers = {
     'Cookie': '_lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); fspop=test; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1597719326,1597722680,1597904377,1598836940; cy=5; cye=nanjing; dplet=86d219cec2636475feba74520ea5a120; dper=70039cd3d2a2aa6eb6af464d7fa48ed947f1a6b2d8af56fc693fc36cc1bbf9abbbb6ed48900b3bd888a09121226146e4aa0fd1453744b108a177e49765e500e8112515512fec93769c382cf038f5860be24c99afdd9e1eb20d8509d9ce938628; ll=7fd06e815b796be3df069dec7836c3df; ua=Song%E5%93%A5; ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1598837446; _lxsdk_s=174421b9cc7-522-0cd-880%7C%7C322',
@@ -34,6 +40,12 @@ headers_comments = {
 headers_css = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
     'accept-encoding': 'gzip, deflate, br'
+}
+
+headers_list = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Cookie': conf.cookie_dict['yaohui']
 }
 
 
@@ -144,85 +156,100 @@ def get_font_map_data(url):
     return font_map_df
 
 
-def shop_infos():
+def shop_infos(url):
     '''
     商家信息:名称、地址、电话等信息
     '''
-    url = 'http://www.dianping.com/shop/ESgfeYKnyRWgqNy6'
-    headers = {
-        'Cookie': '_lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); fspop=test; cy=5; cye=nanjing; dplet=86d219cec2636475feba74520ea5a120; dper=70039cd3d2a2aa6eb6af464d7fa48ed947f1a6b2d8af56fc693fc36cc1bbf9abbbb6ed48900b3bd888a09121226146e4aa0fd1453744b108a177e49765e500e8112515512fec93769c382cf038f5860be24c99afdd9e1eb20d8509d9ce938628; ua=Song%E5%93%A5; ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; ll=7fd06e815b796be3df069dec7836c3df; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1598854675,1598855917,1598855925,1598925904; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1598940244; _lxsdk_s=1744837056d-468-3ae-e5f%7C%7C371',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
+    # 代理服务器
+    proxyHost = random.choice(list(conf.post_pool_dict.keys()))
+    proxyPort = conf.post_pool_dict[proxyHost]
+
+    proxyMeta = "http://%(host)s:%(port)s" % {
+        "host": proxyHost,
+        "port": proxyPort,
     }
-    res = requests.get(url, headers=headers).content.decode()
-    # 获取数字加密映射关系
-    num = tools.get_num_font('1e0a7e13.woff')
-    for key in num:
-        if key in res:
-            res = res.replace(key, str(num[key]))
-    html = etree.HTML(res)
+    proxies = {
+        "http": proxyMeta,
+        "https": proxyMeta
+    }
+    # res = requests.get(url, headers=conf.headers, proxies=proxies)
+    res = requests.get(url, headers=conf.headers)
+    print('状态码：{}，url={}'.format(res.status_code, url))
+    tel_phone = None
+    if 200 == res.status_code:
+        res = res.content.decode()
+        if '验证中心' in str(res):
+            input('请向右拖动滑块')
+            res = requests.get(url, headers=conf.headers).content.decode()
 
-    # 店铺名称
-    shop_name = html.xpath('.//div[@id="basic-info"]//h1[@class="shop-name"]//text()')
-    shop_name = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in shop_name]
-    shop_name = list(filter(None, shop_name))
-    shopName = ''
-    for n in shop_name:
-        shopName += n
-    # 人均价格
-    price = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="avgPriceTitle"]//text()')
-    price_unit = ''
-    for n in price:
-        price_unit += n
+        # 获取数字加密映射关系
+        num = tools.get_num_font('907bdac6.woff')
+        for key in num:
+            if key in res:
+                res = res.replace(key, str(num[key]))
+        html = etree.HTML(res)
 
-    # 评论条数
-    com_count = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="reviewCount"]//text()')
-    com_count = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in com_count]
-    com_count = list(filter(None, com_count))
-    com_count = [x.replace('条评价', '') for x in com_count]
-    com_count = list(filter(None, com_count))
-    count_comment = ''
-    for c in com_count:
-        count_comment += c
-    # count_comment = int(count_comment)
-    # 公共评分
-    comment_score = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="comment_score"]//text()')
-    comment_score = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in comment_score]
-    comment_score = list(filter(None, comment_score))
-    commentScore = ''
-    for s in comment_score:
-        commentScore += s
+        # 店铺名称
+        shop_name = html.xpath('.//div[@id="basic-info"]//h1[@class="shop-name"]//text()')
+        shop_name = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in shop_name]
+        shop_name = list(filter(None, shop_name))
+        shopName = ''
+        for n in shop_name:
+            shopName += n
+        # 人均价格
+        price = html.xpath('.//div[@id="basic-info"]//div[@class="brief-info"]//span[@id="avgPriceTitle"]//text()')
+        price_unit = ''
+        for n in price:
+            price_unit += n
 
-    # 电话
-    telephone = html.xpath('.//div[@id="basic-info"]//p[@class="expand-info tel"]//text()')
-    telephone = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in telephone]
-    telephone = list(filter(None, telephone))
-    tel_phone = ''
-    for n in telephone:
-        tel_phone += n
+        # 评论条数
+        com_count = html.xpath(
+            './/div[@id="basic-info"]//div[@class="brief-info"]//span[@id="reviewCount"]//text()')
+        com_count = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in com_count]
+        com_count = list(filter(None, com_count))
+        com_count = [x.replace('条评价', '') for x in com_count]
+        com_count = list(filter(None, com_count))
+        count_comment = ''
+        for c in com_count:
+            count_comment += c
+        # count_comment = int(count_comment)
+        # 公共评分
+        comment_score = html.xpath(
+            './/div[@id="basic-info"]//div[@class="brief-info"]//span[@id="comment_score"]//text()')
+        comment_score = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in comment_score]
+        comment_score = list(filter(None, comment_score))
+        commentScore = ''
+        for s in comment_score:
+            commentScore += s
 
-    # 获取文字加密映射关系
-    num = tools.get_num_font('06d91562.woff')
-    for key in num:
-        if key in res:
-            res = res.replace(key, str(num[key]))
-    html = etree.HTML(res)
-    # 地址
-    address = html.xpath(
-        './/div[@id="basic-info"]//div[@class="expand-info address"]//div[@id="J_map-show"]//span[@class="item"]//text()')
-    address = [x.replace(' ', '') for x in address]
-    address = list(filter(None, address))
-    address_real = ''
-    for f in address:
-        address_real += f
+        # 电话
+        telephone = html.xpath('.//div[@id="basic-info"]//p[@class="expand-info tel"]//text()')
+        telephone = [x.replace('\n', '').replace('\r', '').replace(' ', '') for x in telephone]
+        telephone = list(filter(None, telephone))
+        tel_phone = ''
+        for n in telephone:
+            tel_phone += n
+    return tel_phone
+    #
+    # # 获取文字加密映射关系
+    # num = tools.get_num_font('06d91562.woff')
+    # for key in num:
+    #     if key in res:
+    #         res = res.replace(key, str(num[key]))
+    # html = etree.HTML(res)
+    # # 地址
+    # address = html.xpath(
+    #     './/div[@id="basic-info"]//div[@class="expand-info address"]//div[@id="J_map-show"]//span[@class="item"]//text()')
+    # address = [x.replace(' ', '') for x in address]
+    # address = list(filter(None, address))
+    # address_real = ''
+    # for f in address:
+    #     address_real += f
 
-    print(price_unit)
-    print(commentScore)
-    print(shopName)
-    print(address_real)
-    print(tel_phone)
-    print('评论条数:', count_comment)
-    print('商家基本信息获取完毕')
-    print('开始采集商家:{}评论信息'.format(shopName))
+    # print('评论条数:', count_comment)
+    # print('商家基本信息获取完毕')
+    # print('开始采集商家:{}评论信息'.format(shopName))
+
     # commments_info(url, count_comment)
 
 
@@ -278,7 +305,8 @@ def commments_info(url, count_comment):
                 score_list = html.xpath(
                     './/div[@class="reviews-items"]//ul//li[{}]//div[@class="main-review"]//div[@class="review-rank"]//span[@class="score"]//text()'.format(
                         i))
-                score_list = [x.replace('\n', '').replace('\t', '').replace('\r', '').replace(' ', '') for x in score_list]
+                score_list = [x.replace('\n', '').replace('\t', '').replace('\r', '').replace(' ', '') for x in
+                              score_list]
                 score_list = list(filter(None, score_list))
                 all_score.append(score_list)
 
@@ -286,13 +314,191 @@ def commments_info(url, count_comment):
             print('评论描述：长度={}，数据={}'.format(len(all_comments), all_comments))
             print('评分时间：长度={}，数据={}'.format(len(all_score), all_score))
             print('评论时间：长度={}，数据={}'.format(len(com_date), com_date))
-            time.sleep(10)
+            time.sleep(12)
 
     else:
         print('没有获取到加密字体映射数据')
 
 
+def get_all_shops_list():
+    '''
+    获取大众点评中每一个品类下面的所有商家列表
+    '''
+    for area, area_name in conf.area_dict.items():
+
+        df_list = []
+        # area = 'laiyuan'
+        url = 'http://www.dianping.com/{}/ch10/g110'.format(area)
+        print(url)
+        p_count = page_count(url)
+        for i in range(1, int(p_count) + 1):
+            url = 'http://www.dianping.com/{}/ch10/g110p{}'.format(area, str(i))
+            print('采集:area={},url={}'.format(area_name, url))
+            try:
+                res = requests.get(url, headers=headers_list).content.decode()
+                html = etree.HTML(res)
+                name = html.xpath('.//div[@class="tit"]/a//h4//text()')
+                url = html.xpath('.//div[@class="tit"]/a/@href')
+                url = [x for x in url if x.startswith('http://www.dianping.com/shop/')]
+                print(len(name), name)
+                print(len(url), url)
+                every_page_df = pd.DataFrame({
+                    'name': name,
+                    'url': url,
+                })
+                df_list.append(every_page_df)
+                time.sleep(20)
+            except Exception as e:
+                print('异常', e)
+        if df_list:
+            allDf = pd.concat(df_list, axis=0)
+            allDf['区域'] = conf.area_dict[area]
+            print(allDf)
+            allDf.to_excel('./data_export/{}数据.xlsx'.format(conf.area_dict[area]), index=False)
+
+
+def page_count(url):
+    '''
+    获取一共的页数
+    '''
+
+    res = requests.get(url, headers=headers_list).content.decode()
+    html = etree.HTML(res)
+    page_list = html.xpath('.//div[@class="page"]/a//text()')
+    page_list = [x for x in page_list if x != '下一页']
+    if page_list:
+        p_count = page_list[-1]
+    else:
+        p_count = 1
+    return p_count
+
+
+def file_name(file_dir):
+    '''
+    获取指定路径下的所有的.xlsx文件
+    '''
+    file_list = []
+    for root, dirs, files in os.walk(file_dir):
+        file_list = files
+    file_list = [x for x in file_list if x.endswith('.xlsx')]
+    return file_list
+
+
+def read_all_excel():
+    '''
+    读取所有excel文件数据 拼接到一个excel数据
+    '''
+    file_dir = './data_export'
+    file_list = file_name(file_dir)
+    dfList = []
+    for file in file_list:
+        df = pd.read_excel('{}/{}'.format(file_dir, file))
+        dfList.append(df)
+    if dfList:
+        allDf = pd.concat(dfList)
+        allDf.drop_duplicates(inplace=True)
+        allDf.to_excel('./data_export2/大众点评数据.xlsx', index=False)
+        print(allDf)
+
+
+def get_phone():
+    '''
+    获取手机号信息
+    '''
+    read_file = './data_export/店铺列表数据_three.xlsx'
+    al_file = './data_export/手机号数据_three.xlsx'
+    # 读取全部的手机列表链接
+    all_df = pd.read_excel(read_file)
+    # 读取已经获取的手机号店铺
+    df_already = pd.read_excel(al_file)
+    need_df = all_df[~all_df['url'].isin(df_already['url'].tolist())]
+    i = 0
+    n = 30
+    while True:
+        if i * n <= len(need_df):
+            all_data = []
+            need_df_s = need_df[i * n: (i + 1) * n]
+            print(need_df_s)
+            for index, info in need_df_s.iterrows():
+                eve_data = []
+                name = info['name']
+                url = info['url']
+                area = info['区域']
+                try:
+                    phone = dianping_test.main(url)
+                    # phone = shop_infos(url)
+                    if phone:
+                        eve_data.append(name)
+                        eve_data.append(url)
+                        eve_data.append(phone)
+                        eve_data.append(area)
+                        all_data.append(eve_data)
+                    else:
+                        eve_data.append(name)
+                        eve_data.append(url)
+                        eve_data.append(None)
+                        eve_data.append(area)
+                    print(eve_data)
+                    time.sleep(4)
+                except Exception as e:
+                    print(e)
+            if all_data:
+                df_new = pd.DataFrame(all_data, columns=['name', 'url', 'phone', '区域'])
+                df_phone_old = pd.read_excel(al_file)
+                df_new = pd.concat([df_phone_old, df_new])
+                df_new.to_excel(al_file, index=False)
+                print('写入')
+            i += 1
+        else:
+            break
+        time.sleep(1)
+
+
+def allfile_toexcel():
+    '''
+    读取所有的excel文件合并为一个excel文件
+    @return:
+    '''
+    file_dir = './data_export2/店铺列表数据_three'
+    export_file = './data_export/店铺列表数据_three.xlsx'
+    for root, dirs, files in os.walk(file_dir):
+        print(len(files), files)
+    df_list = []
+    i = 1
+    for file in files:
+        print(i, file)
+        df = pd.read_excel('{}/{}'.format(file_dir, file))
+        df_list.append(df)
+        i += 1
+    all_df = pd.concat(df_list)
+    print(all_df)
+    writer = pd.ExcelWriter(export_file, engine='xlsxwriter', options={'strings_to_urls': False})
+    all_df.to_excel(writer, index=False)
+    writer.close()
+
+
+def df_merge():
+    df1 = pd.read_excel('./data_export/店铺列表数据_one.xlsx')
+    df2 = pd.read_excel('./data_export/店铺列表数据_one.xlsx')
+    df2.drop_duplicates(inplace=True)
+    df2.to_excel('./data_export/手机号数据.xlsx', index=False)
+    df = pd.merge(df1, df2, on=['name', 'url', 'area'], how='left')
+    df.to_excel('./data_export/大众点评商铺手机号数据.xlsx', index=False)
+    print('手机号数据生成完毕')
+
+    # 给客户发的数据
+    send_df = df[df['phone'].notnull()]
+    send_df.to_excel('./data_export/大众点评商铺手机号数据_send.xlsx', index=False)
+    print('发给客户数据生成完毕')
+    df = pd.read_excel('./data_export/手机号数据send_one.xlsx')
+    df = df[['name', '区域', 'phone']]
+    df.drop_duplicates(inplace=True)
+    df.to_excel('./data_export/手机号数据send_one2.xlsx', index=False)
+
+
 if __name__ == '__main__':
-    url = shop_infos()
-    # url = 'http://www.dianping.com/shop/G8KdwGcs7WDIJqhQ'
-    # commments_info(url)
+    # 获取手机号
+    get_phone()
+    # 读取所有的excel文件合并为一个excel文件
+    # allfile_toexcel()
+    # df_merge()

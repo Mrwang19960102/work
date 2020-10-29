@@ -4,6 +4,8 @@
 # @Author:     |   ThinkPad
 # @Desc:       |  爬虫工具软件
 import base64
+import requests
+import json
 import re
 import pandas as pd
 from io import BytesIO
@@ -100,3 +102,15 @@ def get_num_font(woff_file):
         a = font_num_names[index].replace('uni', '&#x').lower() + ";"
         num_font_map[a] = value
     return num_font_map
+
+
+def replace_ip():
+    header = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
+    url = 'http://api.zhuzhaiip.com:498/GetIpPort?passageId=1319159857041154050&num=100&protocol=2&province=&city=&minute=30&format=2&split=&splitChar=&reset=false&secret=c6nxY5'
+    res = requests.get(url, headers=header).content.decode()
+    res_json=json.loads(res)
+    post_pool_dict = {}
+    for i in range(len(res_json['data'])):
+        post_pool_dict[res_json['data'][i]['ip']]=res_json['data'][i]['port']
+    return post_pool_dict
