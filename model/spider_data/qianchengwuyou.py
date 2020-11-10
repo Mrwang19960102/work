@@ -32,6 +32,7 @@ def spider_info(url):
     print(info)
 
 
+
 if __name__ == '__main__':
     url = 'https://search.51job.com/list/010000%252c020000,000000,0000,00,0,99,+,2,2.html?lang=c&postchannel=0000&workyear=99&cotype=99&degreefrom=04&jobterm=01&companysize=99&ord_field=0&dibiaoid=0&line=&welfare='
     spider_info(url)

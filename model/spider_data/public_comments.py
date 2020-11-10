@@ -16,6 +16,7 @@ from datetime import datetime
 from multiprocessing import Pool
 # from fake_useragent import UserAgent
 from model.spider_data import tools, conf
+from model.spider_data.dao import dbmanager_dzdp
 
 from model.spider_data import dianping_test
 
@@ -45,7 +46,7 @@ headers_css = {
 headers_list = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'Cookie': conf.cookie_dict['yaohui']
+    'Cookie': conf.cookie_dict['xxx']
 }
 
 
@@ -160,21 +161,21 @@ def shop_infos(url):
     '''
     商家信息:名称、地址、电话等信息
     '''
-    # 代理服务器
-    proxyHost = random.choice(list(conf.post_pool_dict.keys()))
-    proxyPort = conf.post_pool_dict[proxyHost]
+    ip_url = 'http://api.zhuzhaiip.com:498/GetIpPort?passageId=1319159857041154050&num=5&protocol=2&province=&city=&minute=30&format=1&split=1&splitChar=&reset=true&secret=c6nxY5'
+    res_ip = requests.get(ip_url).content.decode()
 
-    proxyMeta = "http://%(host)s:%(port)s" % {
-        "host": proxyHost,
-        "port": proxyPort,
-    }
+    ip_list = res_ip.split(' ')
+    ip_list = ip_list[0].split('\r\n')
+
+    proxyMeta = random.choices(ip_list)
     proxies = {
-        "http": proxyMeta,
-        "https": proxyMeta
+        "http": 'http://' + proxyMeta[0],
+        "https": 'https://' + proxyMeta[0]
     }
-    # res = requests.get(url, headers=conf.headers, proxies=proxies)
-    res = requests.get(url, headers=conf.headers)
-    print('状态码：{}，url={}'.format(res.status_code, url))
+    res = requests.get(url, headers=conf.headers, proxies=proxies, timeout=3)
+    print('状态码：{}，proxies={},url={}'.format(res.status_code, proxies, url))
+    # res = requests.get(url, headers=conf.headers)
+    # print('状态码：{},url={}'.format(res.status_code, url))
     tel_phone = None
     if 200 == res.status_code:
         res = res.content.decode()
@@ -405,53 +406,59 @@ def get_phone():
     '''
     获取手机号信息
     '''
-    read_file = './data_export/店铺列表数据_three.xlsx'
-    al_file = './data_export/手机号数据_three.xlsx'
-    # 读取全部的手机列表链接
-    all_df = pd.read_excel(read_file)
-    # 读取已经获取的手机号店铺
-    df_already = pd.read_excel(al_file)
-    need_df = all_df[~all_df['url'].isin(df_already['url'].tolist())]
-    i = 0
-    n = 30
-    while True:
-        if i * n <= len(need_df):
-            all_data = []
-            need_df_s = need_df[i * n: (i + 1) * n]
-            print(need_df_s)
-            for index, info in need_df_s.iterrows():
-                eve_data = []
-                name = info['name']
-                url = info['url']
-                area = info['区域']
-                try:
-                    phone = dianping_test.main(url)
-                    # phone = shop_infos(url)
-                    if phone:
-                        eve_data.append(name)
-                        eve_data.append(url)
-                        eve_data.append(phone)
-                        eve_data.append(area)
-                        all_data.append(eve_data)
+    pw = '火锅'
+    # 获取全部的店铺url 和 已经获取过手机号的url  做差集 得到需要获取的手机号
+    all_df = dbmanager_dzdp.all_shop_phone(pw)
+    already_shop_url = dbmanager_dzdp.already_shop_phone(pw)
+    if not all_df.empty:
+        if already_shop_url:
+            need_df = all_df[~all_df['url'].isin(already_shop_url)]
+            i = 0
+            n = 20
+            if not need_df.empty:
+                while True:
+                    if i * n <= len(need_df):
+                        all_data = []
+                        need_df_s = need_df[i * n: (i + 1) * n]
+                        if not need_df_s.empty:
+                            print(need_df_s)
+                            print('需要更新{}条数据'.format(len(need_df) - i * n))
+                            num = 1
+                            for index, info in need_df_s.iterrows():
+                                eve_data = []
+                                name = info['shop_name']
+                                url = info['url']
+                                area = info['city']
+                                try:
+                                    # phone = dianping_test.main(url)
+                                    phone = shop_infos(url)
+                                    if phone:
+                                        eve_data.append(name)
+                                        eve_data.append(url)
+                                        eve_data.append(str(phone))
+                                        eve_data.append(area)
+                                        all_data.append(eve_data)
+                                    else:
+                                        eve_data.append(name)
+                                        eve_data.append(url)
+                                        eve_data.append(None)
+                                        eve_data.append(area)
+                                    print(num, eve_data)
+                                except Exception as e:
+                                    print(e)
+                                num += 1
+                                # time.sleep(3)
+
+                            if all_data:
+                                df_new = pd.DataFrame(all_data, columns=['shop_name', 'url', 'phone', 'city'])
+                                df_new['shop_type'] = pw
+                                dbmanager_dzdp.save_dzdp_phone_data(df_new)
+                                print('写入')
+                            i += 1
+                        else:
+                            break
                     else:
-                        eve_data.append(name)
-                        eve_data.append(url)
-                        eve_data.append(None)
-                        eve_data.append(area)
-                    print(eve_data)
-                    time.sleep(4)
-                except Exception as e:
-                    print(e)
-            if all_data:
-                df_new = pd.DataFrame(all_data, columns=['name', 'url', 'phone', '区域'])
-                df_phone_old = pd.read_excel(al_file)
-                df_new = pd.concat([df_phone_old, df_new])
-                df_new.to_excel(al_file, index=False)
-                print('写入')
-            i += 1
-        else:
-            break
-        time.sleep(1)
+                        break
 
 
 def allfile_toexcel():
@@ -478,8 +485,8 @@ def allfile_toexcel():
 
 
 def df_merge():
-    df1 = pd.read_excel('./data_export/店铺列表数据_one.xlsx')
-    df2 = pd.read_excel('./data_export/店铺列表数据_one.xlsx')
+    df1 = pd.read_excel('./data_export/To_update.xlsx')
+    df2 = pd.read_excel('./data_export/To_update手机号.xlsx')
     df2.drop_duplicates(inplace=True)
     df2.to_excel('./data_export/手机号数据.xlsx', index=False)
     df = pd.merge(df1, df2, on=['name', 'url', 'area'], how='left')
@@ -499,6 +506,3 @@ def df_merge():
 if __name__ == '__main__':
     # 获取手机号
     get_phone()
-    # 读取所有的excel文件合并为一个excel文件
-    # allfile_toexcel()
-    # df_merge()

@@ -155,4 +155,15 @@ def exec_sql(sql, table_name):
     return bo
 
 
-get_conn('qiye_data')
+def con_insert_sql(df, table_name):
+    '''
+
+    :param df:
+    :param table_name:
+    :return:
+    '''
+    columns = list(df.columns)
+    columns_param = ','.join(columns)
+    values_param = ','.join(['%s'] * len(columns))
+    sql = '''insert into {} ({}) values ({})'''.format(table_name, columns_param, values_param)
+    return sql

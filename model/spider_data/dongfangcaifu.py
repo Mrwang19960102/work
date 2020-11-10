@@ -37,5 +37,7 @@ def stock_comments():
         print(len(date_com), date_com)
 
 
+
+
 if __name__ == '__main__':
     stock_comments()

@@ -18,7 +18,14 @@ db_dest_conf = dict(cf.items('db_dest'))
 # 数据库最大连接次数
 max_con_number = 10
 
-
 qiye_data_table = 'qiye_data'
 qiye_info_table = 'qiye_info'
 film_reviews_table = 'film_reviews'
+
+# 表名
+dianping_new_shaosong_table = 'dianping_new_shaosong'
+map_baidu_data_table = 'map_baidu_data'
+dzdp_shop_table = 'dzdp_shop'
+dzdp_shop_phone_table = 'dzdp_shop_phone'
+
+maoyan_movie_table ='maoyan_movie'

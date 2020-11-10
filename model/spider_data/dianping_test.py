@@ -8,11 +8,12 @@ import random
 import time
 import requests
 from model.spider_data import conf
+from datetime import datetime
 
 
 class DZDP(object):
     def __init__(self):
-        self.headers = conf.headers
+        self.headers = conf.headers2
 
     def parse(self, shop_id):
         num_dic = {
@@ -53,31 +54,29 @@ class DZDP(object):
             }
             values = list(val.values())
             values = list(filter(None, values))
-            return values
-        else:
-            return None
+            if values:
+                return values
+            else:
+                return '手机号：无添加'
 
     def fetch(self, url):
         i = 1
         while True:
             if i <= 3:
-                # 代理服务器
-                proxyHost = random.choice(list(conf.post_pool_dict))
-                proxyPort = conf.post_pool_dict[proxyHost]
+                ip_url = 'http://api.zhuzhaiip.com:498/GetIpPort?passageId=1319159857041154050&num=5&protocol=2&province=&city=&minute=30&format=1&split=1&splitChar=&reset=true&secret=c6nxY5'
+                res_ip = requests.get(ip_url).content.decode()
 
-                proxyMeta = "http://%(host)s:%(port)s" % {
-                    "host": proxyHost,
-                    "port": proxyPort,
-                }
+                ip_list = res_ip.split(' ')
+                ip_list = ip_list[0].split('\r\n')
+
+                proxyMeta = random.choices(ip_list)
                 proxies = {
-                    "http": proxyMeta,
-                    "https": proxyMeta
+                    "http": 'http://'+proxyMeta[0],
+                    "https": 'https://'+proxyMeta[0]
                 }
-
-                r = requests.get(url=url, headers=self.headers)
-                print('状态:{},url={}'.format(r.status_code, url))
-                # r = requests.get(url=url, headers=self.headers, proxies=proxies)
-                # print('状态:{},proxies={},url={}'.format(r.status_code, proxies, url))
+                print(proxies)
+                r = requests.get(url=url, headers=self.headers, proxies=proxies,timeout=3)
+                print('状态:{},proxies={},url={}'.format(r.status_code, proxies, url))
                 if 200 == r.status_code:
                     html = r.content.decode()
                     html_json = json.loads(html)
@@ -85,9 +84,7 @@ class DZDP(object):
                         input('更换cookie，{}'.format(html_json))
                     else:
                         return html
-                time.sleep(1)
-
-
+                # time.sleep(1)
             else:
                 break
             i += 1
@@ -106,4 +103,4 @@ def main(shop_url):
     if phones:
         return phones
     else:
-        return '无添加'
+        return None
