@@ -39,7 +39,7 @@ def deal_data():
     @return:
     '''
     source_file_list = ['8月搞笑&网红达人拉新', '8月搞笑拉新', '9月时尚拉新进度表',
-                        '9月汽车拉新进度表', '9月游戏拉新进度表', '9月音乐拉新进度表',
+                        '9月汽车拉新进度表', '9月泛生活拉新', '9月游戏拉新进度表', '9月音乐拉新进度表',
                         'VLOG拉新', '拉新一号分部', '拉新二号分部', '拉新三号分部']
     df_list = []
     name_list = []
@@ -58,8 +58,10 @@ def deal_data():
         every_df_sheet = data_df.sheet_names
         for sheet in every_df_sheet:
             if sheet in sheet_name_list_t:
+                print(source_file, sheet)
                 data_df = pd.read_excel('./data_source/{}.xlsx'.format(source_file), sheet_name=sheet, index_col=0)
                 if not data_df.empty:
+                    print(data_df.columns)
                     check_df = data_df[data_df['作者拉新状态'].isin(['已发文', '已激活', '已入驻'])]
                     if not check_df.empty:
                         print('文件={}，sheet={}数据提取完成'.format(source_file, sheet))

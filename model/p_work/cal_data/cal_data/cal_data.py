@@ -63,7 +63,7 @@ if not data_source_df.empty:
     print(all_data)
     data_df = pd.DataFrame(all_data, columns=['距离', '设备型号', 'Tx-power', '一共有条数据',
                                               'RSSI有多少是>=-75的', '百分比是多少', '一分钟接受的信号>=51', '百分比是多少(接受信号)'])
-    data_result_df.rename(columns = {'Distance':'距离', 'Device':'设备型号'},inplace=True)
+    data_result_df.rename(columns={'Distance': '距离', 'Device': '设备型号'}, inplace=True)
 
     data = pd.merge(data_result_df[['距离', '设备型号', 'Tx-power']], data_df, on=['距离', '设备型号', 'Tx-power'], how='left')
 
