@@ -374,32 +374,9 @@ def page_count(url):
     return p_count
 
 
-def file_name(file_dir):
-    '''
-    获取指定路径下的所有的.xlsx文件
-    '''
-    file_list = []
-    for root, dirs, files in os.walk(file_dir):
-        file_list = files
-    file_list = [x for x in file_list if x.endswith('.xlsx')]
-    return file_list
 
 
-def read_all_excel():
-    '''
-    读取所有excel文件数据 拼接到一个excel数据
-    '''
-    file_dir = './data_export'
-    file_list = file_name(file_dir)
-    dfList = []
-    for file in file_list:
-        df = pd.read_excel('{}/{}'.format(file_dir, file))
-        dfList.append(df)
-    if dfList:
-        allDf = pd.concat(dfList)
-        allDf.drop_duplicates(inplace=True)
-        allDf.to_excel('./data_export2/大众点评数据.xlsx', index=False)
-        print(allDf)
+
 
 
 def get_phone():
@@ -466,41 +443,12 @@ def allfile_toexcel():
     读取所有的excel文件合并为一个excel文件
     @return:
     '''
-    file_dir = './data_export2/店铺列表数据_three'
-    export_file = './data_export/店铺列表数据_three.xlsx'
-    for root, dirs, files in os.walk(file_dir):
-        print(len(files), files)
-    df_list = []
-    i = 1
-    for file in files:
-        print(i, file)
-        df = pd.read_excel('{}/{}'.format(file_dir, file))
-        df_list.append(df)
-        i += 1
-    all_df = pd.concat(df_list)
-    print(all_df)
-    writer = pd.ExcelWriter(export_file, engine='xlsxwriter', options={'strings_to_urls': False})
+    all_df = pd.DataFrame()
+    writer = pd.ExcelWriter('', engine='xlsxwriter', options={'strings_to_urls': False})
     all_df.to_excel(writer, index=False)
     writer.close()
 
 
-def df_merge():
-    df1 = pd.read_excel('./data_export/To_update.xlsx')
-    df2 = pd.read_excel('./data_export/To_update手机号.xlsx')
-    df2.drop_duplicates(inplace=True)
-    df2.to_excel('./data_export/手机号数据.xlsx', index=False)
-    df = pd.merge(df1, df2, on=['name', 'url', 'area'], how='left')
-    df.to_excel('./data_export/大众点评商铺手机号数据.xlsx', index=False)
-    print('手机号数据生成完毕')
-
-    # 给客户发的数据
-    send_df = df[df['phone'].notnull()]
-    send_df.to_excel('./data_export/大众点评商铺手机号数据_send.xlsx', index=False)
-    print('发给客户数据生成完毕')
-    df = pd.read_excel('./data_export/手机号数据send_one.xlsx')
-    df = df[['name', '区域', 'phone']]
-    df.drop_duplicates(inplace=True)
-    df.to_excel('./data_export/手机号数据send_one2.xlsx', index=False)
 
 
 if __name__ == '__main__':
