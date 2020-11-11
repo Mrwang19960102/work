@@ -16,7 +16,7 @@ def maoyan_movie():
     @return:
     '''
     for p in range(0, 67):
-        print('第{}页'.format(p+1))
+        print('第{}页'.format(p + 1))
         url = 'https://maoyan.com/films?catId=3&showType=3&offset={}'.format(str(30 * p))
         headers = {
             'Referer': 'https://maoyan.com/films?catId=3&showType=3',
@@ -85,5 +85,40 @@ def movie_infos():
         print(len(comments), comments)
 
 
+def maoyan_movie_phone():
+    '''
+
+    @return:
+    '''
+    url = 'https://m.maoyan.com/ajax/moreClassicList?sortId=1&showType=3&limit=100&offset=0&optimus_uuid=6C26AC7023C711EB8297174E8F78EC04D276343670EB40C38C7AF592B64B9354&optimus_risk_level=71&optimus_code=10'
+    headers = {
+        'Host': 'm.maoyan.com',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Mobile Safari/537.36'
+    }
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        url_list = html.xpath('.//a/@href')
+        name_list = html.xpath('.//div[@class="title line-ellipsis"]/text()')
+        type_list = html.xpath('.//div[@class="actors line-ellipsis"]/text()')
+        releaseTime_list=[]
+        for i in range(1, 101):
+            releaseTime = html.xpath(
+                './/a[{}]//div[@class="movie-info"]//div[@class="show-info line-ellipsis"]//text()'.format(str(i)))
+            if releaseTime:
+                releaseTime_list.append(releaseTime[0])
+            else:
+                releaseTime_list.append(None)
+        score_list = html.xpath('.//div[@class="movie-score"]//text()')
+        score_list = [x.replace('\n', '').replace('分', '').replace(' ', '') for x in score_list]
+        score_list = list(filter(None, score_list))
+        print(len(url_list), url_list)
+        print(len(name_list), name_list)
+        print(len(type_list), type_list)
+        print(len(releaseTime_list), releaseTime_list)
+        print(len(score_list), score_list)
+
+
 if __name__ == '__main__':
-    maoyan_movie()
+    maoyan_movie_phone()
