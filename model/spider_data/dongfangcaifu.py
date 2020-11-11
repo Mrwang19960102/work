@@ -15,29 +15,83 @@ headers = {
 
 def stock_comments():
     '''
-    爬取股票股吧评论数据
+    爬取东方财富网股吧评论标题等数据
+    @return:
+    '''
+    for i in range(1, 10000):
+        print('第{}页'.format(i))
+        url = 'http://guba.eastmoney.com/default,0_{}.html'.format(str(i))
+        res = requests.get(url, headers=headers).content.decode()
+        html = etree.HTML(res)
+        title = html.xpath('.//div[@class="balist"]//ul[@class="newlist"]//li//span[@class="sub"]//a/@title')
+        title = [x.replace(' ', '') for x in title]
+        title = list(filter(None, title))
+        urls = html.xpath('.//div[@class="balist"]//ul[@class="newlist"]//li//span[@class="sub"]//a/@href')
+        urls = [x.replace(' ', '') for x in urls]
+        urls = list(filter(None, urls))
+        authors = html.xpath('.//div[@class="balist"]//ul[@class="newlist"]//li//cite[@class="aut"]//a//text()')
+        update_date = html.xpath('.//div[@class="balist"]//ul[@class="newlist"]//li//cite[@class="last"]//text()')
+        print(len(title), title)
+        print(len(urls), urls)
+        print(len(authors), authors)
+        print(len(update_date), update_date)
+
+
+def fund_comments():
+    '''
+    东方财富网基金吧 标题数据等
     @return:
     '''
     for i in range(1, 201):
         print('第{}页'.format(i))
-        url = 'http://guba.eastmoney.com/list,zssh000001_{}.html'.format(str(i))
+        url = 'http://guba.eastmoney.com/jj_{}.html'.format(str(i))
         res = requests.get(url, headers=headers).content.decode()
         html = etree.HTML(res)
-        title = html.xpath('.//div[@id="articlelistnew"]//div[@class="articleh normal_post"]//span[3]//text()')
+        title = html.xpath('.//ul[@class="newlist"]//li//span[@class="sub"]//a[2]/@title')
         title = [x.replace(' ', '') for x in title]
         title = list(filter(None, title))
-        urls = html.xpath('.//div[@id="articlelistnew"]//div[@class="articleh normal_post"]//span[3]//@href')
+        urls = html.xpath('.//ul[@class="newlist"]//li//span[@class="sub"]//a[2]/@href')
         urls = [x.replace(' ', '') for x in urls]
         urls = list(filter(None, urls))
-        authors = html.xpath('.//div[@id="articlelistnew"]//div[@class="articleh normal_post"]//span[4]//text()')
-        date_com = html.xpath('.//div[@id="articlelistnew"]//div[@class="articleh normal_post"]//span[5]//text()')
+        authors = html.xpath('.//ul[@class="newlist"]//li//cite[@class="aut"]//text()')
+        date_com = html.xpath('.//ul[@class="newlist"]//li//cite[@class="date"]/text()')
         print(len(title), title)
         print(len(urls), urls)
         print(len(authors), authors)
         print(len(date_com), date_com)
 
 
+def fund_comments_infos():
+    '''
+    东方财富网基金吧某一个论坛的评论
+    @return:
+    '''
+    url = 'http://guba.eastmoney.com/news,of161726,978007283.html'
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        comments_infos = html.xpath('.//div[@class="stockcodec .xeditor"]//text()')
+        comments_infos = [x.replace('\r', '').replace('\n', '').replace(' ', '') for x in comments_infos]
+
+        # 帖子的评论
+        post_comments = html.xpath(
+            './/div[@class="zwlitxt"]//div[@class="zwlitext  stockcodec"]//div[@class="short_text"]//text()')
+        post_comments = [x.replace('\r', '').replace('\n', '').replace(' ', '') for x in post_comments]
+        post_comments = list(filter(None, post_comments))
+
+        # 帖子评论的作者
+        post_comments_author = html.xpath('.//span[@class="zwnick"]//a//text()')
+
+        # 帖子评论的时间
+        post_comments_date = html.xpath('.//div[@class="zwlitime"]//text()')
+        post_comments_date = [x.replace('发表于', '').lstrip() for x in post_comments_date]
+
+        print(comments_infos)
+        print(len(post_comments), post_comments)
+        print(len(post_comments_author), post_comments_author)
+        print(len(post_comments_date), post_comments_date)
 
 
 if __name__ == '__main__':
-    stock_comments()
+    fund_comments_infos()
