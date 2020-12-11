@@ -43,10 +43,11 @@ headers_css = {
     'accept-encoding': 'gzip, deflate, br'
 }
 
+# 列表页
 headers_list = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'Cookie': conf.cookie_dict['xxx']
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+    'Cookie': 'navCtgScroll=0; _lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; cye=nanjing; ua=Song%E5%93%A5; fspop=test; cy=5; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1605582236,1605591555,1605605140,1606371418; dplet=bffd22a916442e317384b63424dd9d36; dper=2d0d9e4d298453f1a91fc71b0b41074e1a957afe928bf1632fe20ad2be3a57b3227193234621812bf9fe038bf45a2c6c79d456664de463d73bd11b1a93e14ed1f480b7919d8aaeeb3bc5eb1b5c24a6e529f62a1f321419d7c45761f0c435ad8d; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; _lxsdk_s=17603329d06-d15-c9e-711%7C%7C208; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1606372328',
+    'Host': 'www.dianping.com'
 }
 
 
@@ -321,62 +322,121 @@ def commments_info(url, count_comment):
         print('没有获取到加密字体映射数据')
 
 
+def get_small_classify(url):
+    '''
+    获取该分类下面的所有小分类
+    @param url:
+    @return:
+    '''
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+        'Cookie': 'navCtgScroll=0; _lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; cye=nanjing; ua=Song%E5%93%A5; fspop=test; cy=5; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1605582236,1605591555,1605605140,1606371418; dplet=bffd22a916442e317384b63424dd9d36; dper=2d0d9e4d298453f1a91fc71b0b41074e1a957afe928bf1632fe20ad2be3a57b3227193234621812bf9fe038bf45a2c6c79d456664de463d73bd11b1a93e14ed1f480b7919d8aaeeb3bc5eb1b5c24a6e529f62a1f321419d7c45761f0c435ad8d; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; _lxsdk_s=17603329d06-d15-c9e-711%7C%7C208; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1606372328',
+        'Host': 'www.dianping.com'
+    }
+    small_classify = []
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        small_classify = html.xpath('.//div[@id="classfy-sub"]//a/@href')[1:]
+
+    return small_classify
+
+
+def get_city_region(url):
+    '''
+    获取城市的所有行政区
+    @param url: 城市url
+    @return:
+    '''
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+        'Cookie': 'navCtgScroll=0; _lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; cye=nanjing; ua=Song%E5%93%A5; fspop=test; cy=5; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1605582236,1605591555,1605605140,1606371418; dplet=bffd22a916442e317384b63424dd9d36; dper=2d0d9e4d298453f1a91fc71b0b41074e1a957afe928bf1632fe20ad2be3a57b3227193234621812bf9fe038bf45a2c6c79d456664de463d73bd11b1a93e14ed1f480b7919d8aaeeb3bc5eb1b5c24a6e529f62a1f321419d7c45761f0c435ad8d; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; _lxsdk_s=17603329d06-d15-c9e-711%7C%7C208; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1606372328',
+        'Host': 'www.dianping.com'
+    }
+    region_list = []
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        region_list = html.xpath('.//div[@id="region-nav"]//a/@href')
+
+    return region_list
+
+
 def get_all_shops_list():
     '''
     获取大众点评中每一个品类下面的所有商家列表
     '''
-    for area, area_name in conf.area_dict.items():
 
-        df_list = []
+    for area, area_name in conf.area_dict.items():
         # area = 'laiyuan'
         url = 'http://www.dianping.com/{}/ch10/g110'.format(area)
-        print(url)
-        p_count = page_count(url)
-        for i in range(1, int(p_count) + 1):
-            url = 'http://www.dianping.com/{}/ch10/g110p{}'.format(area, str(i))
-            print('采集:area={},url={}'.format(area_name, url))
-            try:
-                res = requests.get(url, headers=headers_list).content.decode()
-                html = etree.HTML(res)
-                name = html.xpath('.//div[@class="tit"]/a//h4//text()')
-                url = html.xpath('.//div[@class="tit"]/a/@href')
-                url = [x for x in url if x.startswith('http://www.dianping.com/shop/')]
-                print(len(name), name)
-                print(len(url), url)
-                every_page_df = pd.DataFrame({
-                    'name': name,
-                    'url': url,
-                })
-                df_list.append(every_page_df)
-                time.sleep(20)
-            except Exception as e:
-                print('异常', e)
-        if df_list:
-            allDf = pd.concat(df_list, axis=0)
-            allDf['区域'] = conf.area_dict[area]
-            print(allDf)
-            allDf.to_excel('./data_export/{}数据.xlsx'.format(conf.area_dict[area]), index=False)
+        select_method = 1
+        if 0 == select_method:
+            # 获取火锅品类下面的所有小分类
+            region_small_classify = get_small_classify(url)
+        elif 1 == select_method:
+            # 获取城市的所有行政区
+            region_small_classify = get_city_region(url)
+        else:
+            region_small_classify = []
+        if region_small_classify:
+            for class_url in region_small_classify:
+                df_list = []
+                p_count = page_count(class_url)
+                for i in range(1, int(p_count) + 1):
+                    parse_url = class_url + 'p{}'.format(str(i))
+                    print('area={},采集第{}页,url={}'.format(area_name, i, parse_url))
+                    try:
+                        res = requests.get(parse_url, headers=headers_list).content.decode()
+                        while '验证中心' in str(res):
+                            input('请向右拖动滑块')
+                            res = requests.get(parse_url, headers=headers_list).content.decode()
+                        html = etree.HTML(res)
+                        shop_name_list = html.xpath('.//div[@class="tit"]/a//h4//text()')
+                        shop_url_list = html.xpath('.//div[@class="tit"]/a/@href')
+                        shop_url_list = [x for x in shop_url_list if x.startswith('http://www.dianping.com/shop/')]
+                        print(len(shop_name_list), shop_name_list)
+                        print(len(shop_url_list), shop_url_list)
+                        every_page_df = pd.DataFrame({
+                            'shop_name': shop_name_list,
+                            'url': shop_url_list,
+                        })
+                        df_list.append(every_page_df)
+                        time.sleep(3)
+                    except Exception as e:
+                        print('异常', e)
+                if df_list:
+                    allDf = pd.concat(df_list, axis=0)
+                    allDf['city'] = conf.area_dict[area]
+                    allDf['shop_type'] = '火锅'
+                    allDf['shop_type'] = '火锅'
+                    if 0 == select_method:
+                        allDf['classification'] = ''
+                    elif 1 == select_method:
+                        # 获取城市的所有行政区
+                        allDf['region'] = ''
+                    in_bo = dbmanager_dzdp.save_dzdp_shoplist(allDf)
+                    print('Save to {},shape={},status={}'.format(conf.dzdp_shop_table, allDf.shape[0], in_bo))
 
 
 def page_count(url):
     '''
     获取一共的页数
     '''
-
-    res = requests.get(url, headers=headers_list).content.decode()
-    html = etree.HTML(res)
-    page_list = html.xpath('.//div[@class="page"]/a//text()')
-    page_list = [x for x in page_list if x != '下一页']
-    if page_list:
-        p_count = page_list[-1]
-    else:
-        p_count = 1
+    p_count = None
+    res = requests.get(url, headers=headers_list)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        page_list = html.xpath('.//div[@class="page"]/a//text()')
+        page_list = [x for x in page_list if x != '下一页']
+        if page_list:
+            p_count = page_list[-1]
+        else:
+            p_count = 1
     return p_count
-
-
-
-
-
 
 
 def get_phone():
@@ -449,8 +509,6 @@ def allfile_toexcel():
     writer.close()
 
 
-
-
 if __name__ == '__main__':
     # 获取手机号
-    get_phone()
+    get_all_shops_list()

@@ -57,3 +57,41 @@ def save_dzdp_phone_data(data_df):
     sql = dbhandler.con_insert_sql(data_df, table_name)
     in_bo = dbhandler.inser_many_date(sql, table_name, all_data)
     return in_bo
+
+
+def save_dzdp_shoplist(data_df):
+    '''
+    存储大众点评店铺列表数据
+    @return:
+    '''
+    in_bo = False
+    if data_df.empty:
+        print('plz check data')
+        return False
+    table_name = conf.dzdp_shop_table
+
+    # 删除旧数据
+    del_sql = '''delete from {} where url in {}'''.format(table_name, tuple(data_df['url'].tolist()))
+    del_bo = dbhandler.exec_sql(del_sql, table_name)
+    if del_bo:
+        data_df = data_df.where(data_df.notnull(), None)
+        data_df['cal_time'] = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+        all_data = np.array(data_df).tolist()
+        sql = dbhandler.con_insert_sql(data_df, table_name)
+        in_bo = dbhandler.inser_many_date(sql, table_name, all_data)
+    return in_bo
+
+
+def get_cities():
+    '''
+    获取数据库中所有的城市
+    @return:
+    '''
+    city_list = []
+    table_name = conf.area_division_table
+    sql = '''select distinct city_name from {}'''.format(table_name)
+    res = dbhandler.get_date(sql, conf.area_division_table)
+    if res:
+        df = pd.DataFrame(list(res), columns=['city_name'])
+        city_list = df['city_name'].tolist()
+    return city_list
