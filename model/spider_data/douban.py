@@ -14,17 +14,22 @@ from multiprocessing import Pool
 from model.spider_data import conf
 from model.spider_data.dao import dbmanager, dbmanager_douban
 
+'''
+电影
+'''
 
-def get_comments_url():
+
+def movie_comments_url():
     '''
     获取每条影评的基本信息
     :return:data_df columns = [id,author,date,title]
     '''
+    allData = []
+    url = 'https://movie.douban.com/subject/26754233/reviews'
     headers = {
         'Referer': 'https://movie.douban.com/subject/26754233/?from=showing',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
     }
-    url = 'https://movie.douban.com/subject/26754233/reviews'
     res = requests.get(url, headers=headers).content.decode()
     html = etree.HTML(res)
     # 解析数据
@@ -46,47 +51,63 @@ def get_comments_url():
         'title': title,
     })
     print(data_df)
-    return data_df
+    pool = Pool(processes=5)
+    allData = []
+    t1 = datetime.now()
+    for index, info in data_df.iterrows():
+        every_data = []
+        id = info['id']
+        # comments_info = comments_detail(id)
+        comments_info = pool.apply_async(comments_detail, (id,index))
+        every_data.append(id)
+        every_data.append(comments_info)
+        allData.append(every_data)
+    pool.close()
+    pool.join()
+    t2 = datetime.now()
+    print(t2-t1)
+    t3 = datetime.now()
+    for index, info in data_df.iterrows():
+        every_data = []
+        id = info['id']
+        comments_info = comments_detail(id,index)
+        every_data.append(comments_info)
+        every_data.append(id)
+        allData.append(every_data)
+        time.sleep(1)
+    t4 = datetime.now()
+    print(t4-t3)
+
+    # all_data = []
+    # if allData:
+    #     for data in allData:
+    #         id = data[0]
+    #         comment = data[1].get()
+    #         # 将数据从队列中取出
+    #         all_data.append([id, comment])
+    # com_df = pd.merge(data_df, pd.DataFrame(list(all_data), columns=['id', 'comment']), on=['id'], how='left')
+    # print(com_df)
+    # return data_df
 
 
-def get_info(data_df):
+
+
+def comments_detail(id,index):
     '''
-    获取每个评论的详细信息
-    :param data_df:
-    :return:
+    获取每个评论的详情
+    @param id: 评论id
+    @return:
     '''
-    # 请求头
     headers = {
-        'Referer': 'https://movie.douban.com/subject/26754233/?from=showing',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
     }
-    info_list = np.array(data_df).tolist()
-    s_time = time.time()
-    for info in info_list:
-        spider_one(info)
-    e_time = time.time()
-    print('所用时间为：{}'.format(e_time - s_time))
-    print('使用进程池')
-    pool = Pool(processes=3)
-    s_time2 = time.time()
-    pool.map(spider_one, info_list)
-    e_time2 = time.time()
-    print('使用进程池所用时间为：{}'.format(e_time2 - s_time2))
-
-
-def spider_one(info):
-    headers = {
-        'Referer': 'https://movie.douban.com/subject/26754233/?from=showing',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
-    }
-    id = info[0]
     url = 'https://movie.douban.com/j/review/' + id + '/full'
     res = requests.get(url, headers=headers).json()
     res = res['html']
     html = etree.HTML(res)
     infos = ''.join(html.xpath('//text()')).replace('\n', '').strip()
-    print(infos)
-    time.sleep(3)
+    print(index,infos)
+    return infos
 
 
 def get_short_commentary(i):
@@ -144,6 +165,11 @@ def movie_short_comments():
             break
 
 
+'''
+书籍
+'''
+
+
 def book_info(index, url):
     '''
     获取每个书籍的信息
@@ -161,7 +187,6 @@ def book_info(index, url):
     isbn = None
     score = None
     com_num = None
-    # url = 'https://book.douban.com/subject/26879323/'
 
     res = requests.get(url, headers=headers, allow_redirects=False)
     if 200 == res.status_code:
@@ -185,11 +210,6 @@ def book_info(index, url):
         com_num_list = html.xpath('.//div[@class="rating_sum"]//span//a//span/text()')
         if com_num_list:
             com_num = com_num_list[0]
-        # print(book_name)
-        # print(author_name)
-        # print(isbn)
-        # print(score)
-        # print(com_num)
         every_data.append(url)
         every_data.append(book_name)
         every_data.append(author_name)
@@ -243,4 +263,4 @@ def get_book_info():
 
 
 if __name__ == '__main__':
-    ...
+    movie_comments_url()

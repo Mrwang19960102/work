@@ -18,44 +18,74 @@ def deal_phone():
     手机号处理
     @return:
     '''
-    df = pd.read_excel('./20201202百度数据_黑吉辽陕西.xlsx')
     allData = []
-    for index, info in df.iterrows():
-        shop_name = info['shop_name']
-        address = info['address']
-        prov_name = info['prov_name']
-        # coun_name = info['coun_name']
-        phone = info['phone']
-        if len(phone) > 15:
-            print(phone)
-            phone_list = []
-            for symbol in [',', ';']:
-                if symbol in phone:
-                    phone_list = phone.split(symbol)
-                    print(phone_list)
-                    break
-            for p in phone_list:
+    allData_send = []
+
+    sql = '''(SELECT DISTINCT shop_name,address,prov_name,phone FROM `map_baidu_data_copy` WHERE prov_name IN (
+    			'广东省','贵州省','浙江省') AND phone != ''  and shop_name not like '焖锅' AND shop_name not like '羊蝎子'
+    	ORDER BY
+    		prov_name
+    ) UNION (SELECT DISTINCT shop_name,address,prov_name,phone
+    FROM `gaodemap_baidu_data`
+    WHERE prov_name IN ('广东省','贵州省','浙江省')
+    AND phone != '' and phone!='[]' and shop_name not like '焖锅' AND shop_name not like '羊蝎子'  ORDER BY prov_name)'''
+    res = dbhandler.get_date(sql, conf.gaodemap_baidu_data_table)
+    if res:
+        df = pd.DataFrame(list(res), columns=['shop_name', 'address', 'prov_name', 'phone'])
+        df.drop_duplicates(inplace=True)
+
+        for index, info in df.iterrows():
+            shop_name = info['shop_name']
+            address = info['address']
+            prov_name = info['prov_name']
+            # coun_name = info['coun_name']
+            phone = info['phone']
+            if len(phone) > 15:
+                print(phone)
+                phone_list = []
+                for symbol in [',', ';']:
+                    if symbol in phone:
+                        phone_list = phone.split(symbol)
+                        print(phone_list)
+                        break
+                for p in phone_list:
+                    every_data = []
+                    every_data.append(shop_name)
+                    every_data.append(address)
+                    every_data.append(prov_name)
+                    every_data.append(p)
+                    print(every_data)
+                    allData.append(every_data)
+            else:
                 every_data = []
                 every_data.append(shop_name)
                 every_data.append(address)
                 every_data.append(prov_name)
-                every_data.append(p)
+                every_data.append(phone)
                 print(every_data)
                 allData.append(every_data)
-        else:
+        allDf = pd.DataFrame(allData, columns=['shop_name', 'address', 'prov_name', 'phone'])
+        allDf['len'] = allDf['phone'].apply(lambda x: len(x))
+        allDf = allDf[allDf['len'] == 11]
+        allDf = allDf[['shop_name', 'address', 'prov_name', 'phone']]
+        allDf.drop_duplicates(inplace=True)
+        tel_list = []
+        for i, info in allDf.iterrows():
             every_data = []
-            every_data.append(shop_name)
-            every_data.append(address)
-            every_data.append(prov_name)
-            every_data.append(phone)
-            print(every_data)
-            allData.append(every_data)
-    allDf = pd.DataFrame(allData, columns=['shop_name', 'address', 'prov_name', 'phone'])
-    allDf['len'] = allDf['phone'].apply(lambda x: len(x))
-    allDf = allDf[allDf['len'] == 11]
-    allDf = allDf[['shop_name', 'address', 'prov_name', 'phone']]
-    allDf.drop_duplicates(inplace=True)
-    allDf.to_excel('./百度数据_黑吉辽陕西.xlsx', index=False)
+            shop_name = info['shop_name']
+            address = info['address']
+            prov_name = info['prov_name']
+            phone = info['phone']
+            if phone not in tel_list:
+                every_data.append(shop_name)
+                every_data.append(address)
+                every_data.append(prov_name)
+                every_data.append(phone)
+                tel_list.append(phone)
+                allData_send.append(every_data)
+    if allData_send:
+        send_df = pd.DataFrame(allData_send,columns=['shop_name', 'address', 'prov_name', 'phone'])
+        send_df.to_excel('./百度数据_广贵浙.xlsx',index=False)
 
 
 def get_shop_info():
@@ -130,48 +160,22 @@ def get_shop_info():
 
 
 if __name__ == '__main__':
-    # deal_phone()
-    df = pd.read_excel('./百度数据_黑吉辽陕西.xlsx')
-    phone_list = []
-    all_data = []
-    for index, info in df.iterrows():
-        every_data = []
-        phone = info['phone']
-        num = info['num']
-        if phone not in phone_list:
-            phone_list.append(phone)
-            every_data.append(phone)
-            every_data.append(num)
-            all_data.append(every_data)
-    if all_data:
-        df1 = pd.DataFrame(list(all_data),columns=['phone','num'])
-        df2 = pd.merge(df1,df,on=['num','phone'],how='left')
-        print(df2)
-        df2.to_excel('./百度数据_黑吉辽陕西2.xlsx', index=False)
-
-#     sql = '''(SELECT shop_name,address,prov_name,phone FROM `gaodemap_baidu_data` where  prov_name IN (
-# 		'辽宁省',
-# 		'吉林省',
-# 		'黑龙江省',
-# 		'陕西省'
-# 	) and phone!='[]') UNION (SELECT DISTINCT
-# 	shop_name,
-# 	address,
-# 	prov_name,
-# 	phone
-# FROM
-# 	`map_baidu_data_copy`
-# WHERE
-# 	prov_name IN (
-# 		'辽宁省',
-# 		'吉林省',
-# 		'黑龙江省',
-# 		'陕西省'
-# 	)
-# AND phone != '')'''
-#     res = dbhandler.get_date(sql, conf.gaodemap_baidu_data_table)
-#     if res:
-#         df = pd.DataFrame(list(res), columns=['shop_name', 'address', 'prov_name', 'phone'])
-#         df.drop_duplicates(inplace=True)
-#         df['is'] = df['shop_name'].apply(lambda x: '0' if '焖锅' in x else '1')
-#         df.to_excel('./20201202百度数据_黑吉辽陕西.xlsx', index=False)
+    # get_shop_info()
+    deal_phone()
+    # df = pd.read_excel('./百度数据_黑吉辽陕西.xlsx')
+    # phone_list = []
+    # all_data = []
+    # for index, info in df.iterrows():
+    #     every_data = []
+    #     phone = info['phone']
+    #     num = info['num']
+    #     if phone not in phone_list:
+    #         phone_list.append(phone)
+    #         every_data.append(phone)
+    #         every_data.append(num)
+    #         all_data.append(every_data)
+    # if all_data:
+    #     df1 = pd.DataFrame(list(all_data),columns=['phone','num'])
+    #     df2 = pd.merge(df1,df,on=['num','phone'],how='left')
+    #     print(df2)
+    #     df2.to_excel('./百度数据_黑吉辽陕西2.xlsx', index=False)
