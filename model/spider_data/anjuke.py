@@ -107,4 +107,5 @@ if __name__ == '__main__':
     for i in range(1, 51):
         print('第{}页'.format(i))
         url = 'https://sh.zu.anjuke.com/fangyuan/pudong/p' + str(i) + '/'
+        print(url)
         rent_houses(url, i)

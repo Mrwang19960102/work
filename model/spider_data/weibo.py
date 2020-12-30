@@ -27,9 +27,29 @@ def asd():
         html = etree.HTML(res)
         author_list = html.xpath('.//div[@class="content"]//p/@nick-name')
         content_list = html.xpath('.//div[@class="content"][]//p//text()')
-        print(len(author_list),author_list)
-        print(len(content_list),content_list)
+        print(len(author_list), author_list)
+        print(len(content_list), content_list)
+
+
+def touxiao():
+    '''
+    爬取新浪微博头条前100条
+    @return:
+    '''
+    url = 'https://weibo.com/?category=1760'
+    headers = {
+        'cookie': 'SINAGLOBAL=4259651335291.8765.1596444675238; ALF=1637630888; SCF=AniQSL9eiDWcn4YwX46zbEmVMIRMaEJOu-x_c4mLuV8BovPgAqnhQtp8NFz2Vzw4RFgunxNJrT0fN7ZqZ4SSVik.; SUB=_2AkMog3aZf8NxqwJRmfkXxGnkZI9wzAzEieKe34dCJRMxHRl-yT92qkIktRB6AwNYcyZ70AGh_Ew_l3K9OatEvrysX-0t; SUBP=0033WrSXqPxfM72-Ws9jqgMF55529P9D9W5MK7sMjufhd.jczATN6HiR; login_sid_t=211814f79f31c88e646c3029dc1ed06b; cross_origin_proto=SSL; WBStorage=8daec78e6a891122|undefined; _s_tentry=passport.weibo.com; UOR=www.takefoto.cn,widget.weibo.com,www.baidu.com; Apache=3813180197333.1704.1608513968026; ULV=1608513968035:8:2:1:3813180197333.1704.1608513968026:1607394727301; wb_view_log=1366*7681',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
+    }
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        print(res)
+        html = etree.HTML(res)
+        title_list = html.xpath(
+            './/div[@class="UG_list_b"]//div[@class="list_des"]//h3[@class="list_title_b"]//a/text()')
+        print(title_list)
 
 
 if __name__ == '__main__':
-    asd()
+    touxiao()

@@ -76,7 +76,8 @@ def house_info(url, area_name, page):
             unitPrice = html.xpath('.//div[@class="unitPrice"]//text()')
             print(len(house_url), house_url)
             print(len(house_name), house_name)
-            community_name_list = [x+' '+community_name_list2[community_name_list1.index(x)] for x in community_name_list1]
+            community_name_list = [x + ' ' + community_name_list2[community_name_list1.index(x)] for x in
+                                   community_name_list1]
             print(len(community_name_list), community_name_list)
             print(len(house_detail_list), house_detail_list)
             print(len(totalPrice), totalPrice)
@@ -91,7 +92,6 @@ def get_page(url):
     page_count = None
     headers = {
         'Referer': url,
-        # 'Cookie': url,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
     }
     res = requests.get(url, headers=headers)
@@ -126,7 +126,6 @@ def get_ershouhouse_data(url):
 
 
 if __name__ == '__main__':
-    city = 'sh'
+    city = 'nj'
     url = 'https://{}.lianjia.com/ershoufang/rs/'.format(city)
-
     get_ershouhouse_data(url)
