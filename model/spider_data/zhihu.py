@@ -35,7 +35,7 @@ def get_hot_info():
         com_list = html.xpath('.//div[@class="HotItem-content"]//a//p[@class="HotItem-excerpt"]//text()')
         print('内容--->长度：{}---{}'.format(len(com_list), com_list))
         hot_list = html.xpath('.//div[@class="HotItem-content"]//div/text()')
-        print('内容--->长度：{}---{}'.format(len(hot_list), hot_list))
+        print('热度--->长度：{}---{}'.format(len(hot_list), hot_list))
 
 
 if __name__ == '__main__':

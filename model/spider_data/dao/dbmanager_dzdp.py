@@ -48,7 +48,7 @@ def save_dzdp_phone_data(data_df):
     in_bo = False
     if data_df.empty:
         print('plz check data')
-        return False
+        return in_bo
     table_name = conf.dzdp_shop_phone_table
     # 删除旧数据
     data_df = data_df.where(data_df.notnull(), None)
@@ -59,7 +59,7 @@ def save_dzdp_phone_data(data_df):
     return in_bo
 
 
-def save_dzdp_shoplist(data_df):
+def save_dzdp_shoplist(data_df, select_method):
     '''
     存储大众点评店铺列表数据
     @return:
@@ -69,9 +69,33 @@ def save_dzdp_shoplist(data_df):
         print('plz check data')
         return False
     table_name = conf.dzdp_shop_table
-
     # 删除旧数据
-    del_sql = '''delete from {} where url in {}'''.format(table_name, tuple(data_df['url'].tolist()))
+    if 1 == select_method:
+        region = data_df['region'].tolist()[0]
+        if 1 < len(data_df):
+            del_sql = '''delete from {} 
+            where url in {} and region='{}' '''.format(table_name,
+                                                       tuple(data_df['url'].tolist()),
+                                                       region)
+        else:
+            del_sql = '''delete from {} 
+            where url = '{}' and region='{}' '''.format(table_name,
+                                                        data_df['url'].tolist()[0],
+                                                        region)
+    elif 0 == select_method:
+        small_type = data_df['small_type'].tolist()[0]
+        if 1 < len(data_df):
+            del_sql = '''delete from {} 
+            where url in {} and small_type='{}' '''.format(table_name,
+                                                           tuple(data_df['url'].tolist()),
+                                                           small_type)
+        else:
+            del_sql = '''delete from {} 
+            where url = '{}' and small_type='{}' '''.format(table_name,
+                                                            tuple(data_df['url'].tolist()),
+                                                            small_type)
+    else:
+        pass
     del_bo = dbhandler.exec_sql(del_sql, table_name)
     if del_bo:
         data_df = data_df.where(data_df.notnull(), None)
@@ -95,3 +119,50 @@ def get_cities():
         df = pd.DataFrame(list(res), columns=['city_name'])
         city_list = df['city_name'].tolist()
     return city_list
+
+
+def already_cityArea(city_name):
+    '''
+    获取该城市已经采集过数据的行政区
+    @param city_name: 城市名称
+    @return:
+    '''
+    city_area_df = pd.DataFrame()
+    tableName = conf.dzdp_shop_table
+    sql = '''select distinct city,region from {} where city ='{}' '''.format(tableName, city_name)
+    res = dbhandler.get_date(sql, tableName)
+    if res:
+        city_area_df = pd.DataFrame(list(res), columns=['city_name', 'area_name'])
+
+    return city_area_df
+
+
+def get_alreadyshop_info():
+    '''
+    获取已经采集过的商铺手机号信息
+    @return:
+    '''
+    dataDf = pd.DataFrame()
+    tableName = conf.dzdp_shop_phone_table
+    sql = '''select DISTINCT shop_id,phone from {}'''.format(tableName)
+    res = dbhandler.get_date(sql, tableName)
+    if res:
+        dataDf = pd.DataFrame(list(res), columns=['shop_id', 'phone'])
+        dataDf['shop_id'] = dataDf['shop_id'].astype(str)
+        dataDf['phone'] = dataDf['phone'].astype(str)
+    return dataDf
+
+
+def get_all_shop():
+    '''
+    获取商铺列表中的所有商铺
+    @return:
+    '''
+    dataDf = pd.DataFrame()
+    tablaName = conf.dzdp_shop_table
+    sql = '''select DISTINCT shop_name,shop_id,url from {} '''.format(tablaName)
+    res = dbhandler.get_date(sql, tablaName)
+    if res:
+        dataDf = pd.DataFrame(list(res), columns=['shop_name', 'shop_id', 'url'])
+        dataDf['shop_id'] = dataDf['shop_id'].astype(str)
+    return dataDf

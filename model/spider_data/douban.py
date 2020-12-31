@@ -58,19 +58,17 @@ def movie_comments_url():
         every_data = []
         id = info['id']
         # comments_info = comments_detail(id)
-        comments_info = pool.apply_async(comments_detail, (id,index))
+        comments_info = pool.map(comments_detail, (id,))
         every_data.append(id)
-        every_data.append(comments_info)
         allData.append(every_data)
-    pool.close()
-    pool.join()
+    print(comments_info)
     t2 = datetime.now()
-    print(t2-t1)
+    print(t2 - t1)
     t3 = datetime.now()
     for index, info in data_df.iterrows():
         every_data = []
         id = info['id']
-        comments_info = comments_detail(id,index)
+        comments_info = comments_detail(id)
         every_data.append(comments_info)
         every_data.append(id)
         allData.append(every_data)
@@ -90,9 +88,7 @@ def movie_comments_url():
     # return data_df
 
 
-
-
-def comments_detail(id,index):
+def comments_detail(id):
     '''
     获取每个评论的详情
     @param id: 评论id
@@ -106,7 +102,7 @@ def comments_detail(id,index):
     res = res['html']
     html = etree.HTML(res)
     infos = ''.join(html.xpath('//text()')).replace('\n', '').strip()
-    print(index,infos)
+    print(infos)
     return infos
 
 
