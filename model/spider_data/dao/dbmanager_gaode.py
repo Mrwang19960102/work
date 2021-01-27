@@ -17,7 +17,7 @@ def get_need_city():
     '''
     df = pd.DataFrame()
     table_name = conf.area_division_table
-    sql = '''SELECT DISTINCT prov_name,city_name FROM {} where prov_name in ('广东省', '贵州省', '浙江省') order by prov_name'''.format(
+    sql = '''SELECT DISTINCT prov_name,city_name FROM {} where prov_name in ('四川省') order by prov_name'''.format(
         table_name)
     res = dbhandler.get_date(sql, table_name)
     print(res)

@@ -101,7 +101,7 @@ def house_info(url, area_name):
             every_page_df['area'] = area_name
             df_list.append(every_page_df)
             # 每一次获取数据 要延时3秒  避免因为短时间内访问次数太多而造成封IP
-            time.sleep(3)
+            # time.sleep(3)
     if df_list:
         area_df = pd.concat(df_list)
     return area_df

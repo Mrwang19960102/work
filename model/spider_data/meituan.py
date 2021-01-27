@@ -24,6 +24,7 @@ def shop_list():
     }
     for i in range(1, 29):
         url = 'https://nj.meituan.com/meishi/c17b273/pn{}/'.format(str(i))
+        print(url)
         res = requests.get(url, headers=headers, verify=False)
         if 200 == res.status_code:
             res = str(res.content.decode())

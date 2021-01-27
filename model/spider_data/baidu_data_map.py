@@ -63,7 +63,9 @@ def search_baidu_map_data(pro_list):
     area_df = area_df[['prov_code', 'prov_name', 'city_code', 'city_name', 'coun_code', 'coun_name']]
     area_df.drop_duplicates(inplace=True)
     area_df = area_df[area_df['prov_name'].isin(pro_list)]
+    area_df = area_df[~area_df['city_name'].isin(['成都市'])]
     for pw in ['火锅', '麻辣烫', '串串香', '烤鱼']:
+    # for pw in ['星巴克']:
         # pw = '火锅'
         # 获取已经计算过的区域
         already_df = dbmanager_baidu.already_area(pw)
@@ -82,8 +84,6 @@ def search_baidu_map_data(pro_list):
             print('开始采集area={}数据'.format(area))
             url = "http://api.map.baidu.com/place/v2/search?query={}&page_size=20&region={}&output=json&ak=".format(
                 pw, area) + ak
-            # print(url)
-            # input()
             params = {'page_num': 0}  # 请求参数，页码
             request = requests.get(url, params=params)  # 请求数据
             if 200 == request.status_code:
@@ -122,7 +122,6 @@ def search_baidu_map_data(pro_list):
                     data_df['city_code'] = city_code
                     data_df['coun_code'] = coun_code
                     data_df['shop_type'] = pw
-                    # df.to_excel('百度数据{}.xlsx'.format(city), header=True, index=False)
                     inbo = dbmanager_baidu.save_baidu_phone(data_df, pw)
                     print('save data area={},status={}'.format(area, inbo))
 
@@ -233,11 +232,10 @@ def deal_phone():
 
 
 if __name__ == '__main__':
-    pro_list = ['广东省', '贵州省', '浙江省']
+    pro_list = ['四川省']
     # deal_phone()
-    # df = pd.read_excel('./百度地图数据山东河南.xlsx')
     # print(len(set(df['phone'].tolist())))
-    # search_baidu_map_data(pro_list)
-    pw = '火锅'
-    region = '南京市江宁区'
-    searchData_api_BD(pw, region)
+    search_baidu_map_data(pro_list)
+    # pw = '火锅'
+    # region = '南京市江宁区'
+    # searchData_api_BD(pw, region)

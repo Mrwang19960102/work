@@ -21,13 +21,13 @@ def deal_phone():
     allData = []
     allData_send = []
 
-    sql = '''(SELECT DISTINCT shop_name,address,prov_name,phone FROM `map_baidu_data_copy` WHERE prov_name IN (
-    			'广东省','贵州省','浙江省') AND phone != ''  and shop_name not like '焖锅' AND shop_name not like '羊蝎子'
+    sql = '''(SELECT DISTINCT shop_name,address,prov_name,phone FROM `map_baidu_data` WHERE prov_name IN (
+    			'四川省') AND phone != ''  and shop_name not like '焖锅' AND shop_name not like '羊蝎子'
     	ORDER BY
     		prov_name
     ) UNION (SELECT DISTINCT shop_name,address,prov_name,phone
     FROM `gaodemap_baidu_data`
-    WHERE prov_name IN ('广东省','贵州省','浙江省')
+    WHERE prov_name IN ('四川省')
     AND phone != '' and phone!='[]' and shop_name not like '焖锅' AND shop_name not like '羊蝎子'  ORDER BY prov_name)'''
     res = dbhandler.get_date(sql, conf.gaodemap_baidu_data_table)
     if res:
@@ -84,8 +84,8 @@ def deal_phone():
                 tel_list.append(phone)
                 allData_send.append(every_data)
     if allData_send:
-        send_df = pd.DataFrame(allData_send,columns=['shop_name', 'address', 'prov_name', 'phone'])
-        send_df.to_excel('./百度数据_广贵浙.xlsx',index=False)
+        send_df = pd.DataFrame(allData_send, columns=['shop_name', 'address', 'prov_name', 'phone'])
+        send_df.to_excel('./百度数据_四川3.xlsx', index=False)
 
 
 def get_shop_info():
@@ -93,89 +93,139 @@ def get_shop_info():
     # 获取已经计算过的城市
     al_prov_city = dbmanager_gaode.al_prov_city()
     need_prov_city = prov_city_df[~prov_city_df['city_name'].isin(al_prov_city)]
+    print(need_prov_city['city_name'].tolist())
     if not need_prov_city.empty:
         for index, info in need_prov_city.iterrows():
             city = info['city_name']
-            prov_name = info['prov_name']
-            for pw in ['火锅', '烤鱼', '麻辣烫', '串串香']:
-                for page in range(1, 50):
-                    print('采集city={},pw={}数据'.format(city, pw))
-                    shopName_list = []
-                    shopAddress_list = []
-                    shopTel_list = []
-                    shopLocation_list = []
-                    key = '514dff9359c2d332b294c8997ecd7719'  # peng
-                    # key = 'b5c93eda62217cd84f6c4f37a4488c26'  #song
-                    url = 'https://restapi.amap.com/v3/place/text?keywords={}&city={}&output=xml&offset=20&page={}&key={}&extensions=all'.format(
-                        pw, city, page, key)
-                    params = {
-                        # 'key': 'b5c93eda62217cd84f6c4f37a4488c26',
-                        # 'keywords': '火锅',
-                        'output': 'JSON'
-                    }
-                    res = requests.get(url, params=params)
+            if '成都市'==city:
+                prov_name = info['prov_name']
+                for pw in ['火锅', '烤鱼', '麻辣烫', '串串香']:
+                    for page in range(1, 50):
+                        print('采集city={},pw={}数据'.format(city, pw))
+                        shopName_list = []
+                        shopAddress_list = []
+                        shopTel_list = []
+                        shopLocation_list = []
+                        # key = '514dff9359c2d332b294c8997ecd7719'  # peng
+                        key = 'b5c93eda62217cd84f6c4f37a4488c26'  #song
+                        url = 'https://restapi.amap.com/v3/place/text?keywords={}&city={}&output=xml&offset=20&page={}&key={}&extensions=all'.format(
+                            pw, city, page, key)
+                        params = {
+                            # 'key': 'b5c93eda62217cd84f6c4f37a4488c26',
+                            # 'keywords': '火锅',
+                            'output': 'JSON'
+                        }
+                        res = requests.get(url, params=params)
 
-                    if 200 == res.status_code:
-                        res = res.content.decode()
-                        json_info = json.loads(res)
-                        shop_info = json_info['pois']
-                        for i in range(len(shop_info)):
-                            shop = shop_info[i]
-                            shopName = shop['name']
-                            shopAddress = shop['address']
-                            shopTel = shop['tel']
-                            shopLocation = shop['location']
-                            shoppcode = shop['pcode']
-                            shoppname = shop['pname']
-                            shopcitycode = shop['citycode']
-                            shocitynamep = shop['cityname']
-                            shopadcode = shop['adcode']
-                            shopadname = shop['adname']
-                            shopName_list.append(shopName)
-                            shopAddress_list.append(shopAddress)
-                            shopTel_list.append(shopTel)
-                            shopLocation_list.append(shopLocation)
-                            # shopName = shop['name']
-                            # shopName = shop['name']
-                    print(page, len(shopName_list), shopName_list)
-                    print(page, shopAddress_list)
-                    print(page, shopTel_list)
-                    if shopName_list and shopAddress_list and shopTel_list:
-                        df = pd.DataFrame({
-                            'shop_name': shopName_list,
-                            'address': shopAddress_list,
-                            'phone': shopTel_list,
-                        })
-                        df['city_name'] = city
-                        df['prov_name'] = prov_name
-                        df['phone'] = df['phone'].astype(str)
-                        df['prov_name'] = df['prov_name'].astype(str)
-                        df['city_name'] = df['city_name'].astype(str)
-                        df['address'] = df['address'].astype(str)
-                        in_bo = dbmanager_gaode.save_gaode_phone_data(df)
-                        print('save data to {},status={},shape={}'.format(conf.gaodemap_baidu_data_table, in_bo,
-                                                                          df.shape[0]))
-                    else:
-                        break
+                        if 200 == res.status_code:
+                            res = res.content.decode()
+                            json_info = json.loads(res)
+                            shop_info = json_info['pois']
+                            for i in range(len(shop_info)):
+                                shop = shop_info[i]
+                                shopName = shop['name']
+                                shopAddress = shop['address']
+                                shopTel = shop['tel']
+                                shopLocation = shop['location']
+                                shoppcode = shop['pcode']
+                                shoppname = shop['pname']
+                                shopcitycode = shop['citycode']
+                                shocitynamep = shop['cityname']
+                                shopadcode = shop['adcode']
+                                shopadname = shop['adname']
+                                shopName_list.append(shopName)
+                                shopAddress_list.append(shopAddress)
+                                shopTel_list.append(shopTel)
+                                shopLocation_list.append(shopLocation)
+                                # shopName = shop['name']
+                                # shopName = shop['name']
+                        print(page, len(shopName_list), shopName_list)
+                        print(page, shopAddress_list)
+                        print(page, shopTel_list)
+                        if shopName_list and shopAddress_list and shopTel_list:
+                            df = pd.DataFrame({
+                                'shop_name': shopName_list,
+                                'address': shopAddress_list,
+                                'phone': shopTel_list,
+                            })
+                            df['city_name'] = city
+                            df['prov_name'] = prov_name
+                            df['phone'] = df['phone'].astype(str)
+                            df['prov_name'] = df['prov_name'].astype(str)
+                            df['city_name'] = df['city_name'].astype(str)
+                            df['address'] = df['address'].astype(str)
+                            in_bo = dbmanager_gaode.save_gaode_phone_data(df)
+                            print('save data to {},status={},shape={}'.format(conf.gaodemap_baidu_data_table, in_bo,
+                                                                              df.shape[0]))
+                        else:
+                            break
+
+
+def get_shop_info_other():
+    city_list = ['呼和浩特', '平顶山', '金华', '扬州', '惠州', '肇庆',
+                 '桂林', '唐山', '河源', '乐山', '杭州', '丽水', '漳州']
+    for city in city_list:
+        for pw in ['星巴克', '一点点', 'coco', '肯德基']:
+            for page in range(1, 50):
+                print('采集city={},pw={}数据'.format(city, pw))
+                shopName_list = []
+                shopAddress_list = []
+                shopTel_list = []
+                shopLocation_list = []
+                key = '514dff9359c2d332b294c8997ecd7719'  # peng
+                # key = 'b5c93eda62217cd84f6c4f37a4488c26'  #song
+                url = 'https://restapi.amap.com/v3/place/text?keywords={}&city={}&output=xml&offset=20&page={}&key={}&extensions=all'.format(
+                    pw, city, page, key)
+                params = {
+                    # 'key': 'b5c93eda62217cd84f6c4f37a4488c26',
+                    # 'keywords': '火锅',
+                    'output': 'JSON'
+                }
+                res = requests.get(url, params=params)
+
+                if 200 == res.status_code:
+                    res = res.content.decode()
+                    json_info = json.loads(res)
+                    shop_info = json_info['pois']
+                    for i in range(len(shop_info)):
+                        shop = shop_info[i]
+                        shopName = shop['name']
+                        shopAddress = shop['address']
+                        shopTel = shop['tel']
+                        shopLocation = shop['location']
+                        shoppcode = shop['pcode']
+                        shoppname = shop['pname']
+                        shopcitycode = shop['citycode']
+                        shocitynamep = shop['cityname']
+                        shopadcode = shop['adcode']
+                        shopadname = shop['adname']
+                        shopName_list.append(shopName)
+                        shopAddress_list.append(shopAddress)
+                        shopTel_list.append(shopTel)
+                        shopLocation_list.append(shopLocation)
+                        # shopName = shop['name']
+                        # shopName = shop['name']
+                print(page, len(shopName_list), shopName_list)
+                print(page, shopAddress_list)
+                print(page, shopTel_list)
+                if shopName_list and shopAddress_list and shopTel_list:
+                    df = pd.DataFrame({
+                        'shop_name': shopName_list,
+                        'address': shopAddress_list,
+                        'phone': shopTel_list,
+                    })
+                    df['city_name'] = city
+                    df['phone'] = df['phone'].astype(str)
+                    df['city_name'] = df['city_name'].astype(str)
+                    df['address'] = df['address'].astype(str)
+                    df['shop_type'] = pw
+                    in_bo = dbmanager_gaode.save_gaode_phone_data(df)
+                    print('save data to {},status={},shape={}'.format(conf.gaodemap_baidu_data_table, in_bo,
+                                                                      df.shape[0]))
+                else:
+                    break
 
 
 if __name__ == '__main__':
-    # get_shop_info()
-    deal_phone()
-    # df = pd.read_excel('./百度数据_黑吉辽陕西.xlsx')
-    # phone_list = []
-    # all_data = []
-    # for index, info in df.iterrows():
-    #     every_data = []
-    #     phone = info['phone']
-    #     num = info['num']
-    #     if phone not in phone_list:
-    #         phone_list.append(phone)
-    #         every_data.append(phone)
-    #         every_data.append(num)
-    #         all_data.append(every_data)
-    # if all_data:
-    #     df1 = pd.DataFrame(list(all_data),columns=['phone','num'])
-    #     df2 = pd.merge(df1,df,on=['num','phone'],how='left')
-    #     print(df2)
-    #     df2.to_excel('./百度数据_黑吉辽陕西2.xlsx', index=False)
+    get_shop_info()
+    # deal_phone()
