@@ -60,18 +60,21 @@ def save_stack_answer(data_df):
     return inbo
 
 
-def check_already(pw, page):
+def check_already(pw):
     '''
     检查有没有怕去过
     @return:
     '''
+    page_list = []
     table_name = conf.stack_overflow_table
-    sql = '''select count(*) from {} where pw='{}' and page={} '''.format(table_name, pw, page)
+    sql = '''SELECT DISTINCT pw,page FROM {} where pw='{}' '''.format(table_name, pw)
     res = dbhandler.get_date(sql, table_name)
     if res:
-        return True
-    else:
-        return False
+        df = pd.DataFrame(list(res), columns=['pw', 'page'])
+        df['page'] = df['page'].astype(int)
+        page_list = df['page'].tolist()
+
+    return page_list
 
 
 def get_need_url(pw):
@@ -83,7 +86,9 @@ def get_need_url(pw):
     table_name1 = conf.stack_overflow_table
     table_name2 = conf.stack_answer_table
     sql = '''SELECT DISTINCT a.url,a.author 
-    from {} a where a.url not in (select DISTINCT url from {}) and a.answer!='0' '''.format(table_name1, table_name2)
+    from {} a where a.url not in (select DISTINCT url from {}) and a.answer!='0' and a.pw='{}' '''.format(table_name1,
+                                                                                                          table_name2,
+                                                                                                          pw)
     res = dbhandler.get_date(sql, table_name1)
 
     if res:

@@ -169,5 +169,5 @@ if __name__ == '__main__':
     pw_list = ['java', 'android-os', 'php', 'mysql', 'spring',
                'jfinal', 'python', 'eclipse', 'linux', 'jquery',
                'tomcat', 'ubuntu', 'centos', 'android', 'echarts']
-    # get_list('android-os')
-    get_info_details('android-os')
+    get_list('android')
+    get_info_details('android')

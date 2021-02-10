@@ -16,7 +16,7 @@ def change_ipdf():
     @return:
     '''
     ip_df = pd.DataFrame()
-    url = 'http://napi.zhuzhaiip.com:9999/iplist?passageId=1319159857057931265&num=10&protocol=2&province=&city=&minute=30&format=2&split=&splitChar=&dedupe=1&secret=sacwkR'
+    url = 'http://napi.zhuzhaiip.com:9999/iplist?passageId=1319159857041154050&num=1&protocol=2&province=&city=&minute=30&format=2&split=&splitChar=&dedupe=1&secret=c6nxY5'
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'

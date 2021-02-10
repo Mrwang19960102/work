@@ -43,107 +43,145 @@ headers_css = {
 
 # 列表页
 headers_list = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-    'Cookie': '_lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; ua=Song%E5%93%A5; fspop=test; cy=5; cye=nanjing; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1610947975,1610951352,1611018359,1611111306; uamo=15195903925; _lxsdk_s=17722df7dc2-10b-b88-41b%7C%7C20; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1611197809',
+    # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.146 Safari/537.36 Edg/88.0.705.62',
+    'Cookie': '_lxsdk=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; _lxsdk_cuid=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; s_ViewType=10; _hc.v=e5b4b74a-1b1f-54dd-2d0c-1b6cc0fc8055.1612425530; dper=5c306da43ba500e1c29230b5f8d70333bc84e8d8ce3ef6906ab4051a01206c012bcac373748106fcf00cfe7978e7ba78c58159649da2365c8c70492037ee7b9504f76e03cad0f8f7554140f20ce97e82cf3018ebd18bb1440fcab4e3bf7d07d1; ua=Song%E5%93%A5; ctu=c6a16fefdaffcb0927e88c1a28a2fd7cbd59e65223c0b3bbdb009bc6e2f13ba9; fspop=test; cy=5; cye=nanjing; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612496386,1612502548,1612502592,1612505548; dplet=b89f1d2d950b1babf9c64c265ee2eb08; _lxsdk_s=17770a439f9-b43-f4d-304%7C%7C124; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612507051',
     'Host': 'www.dianping.com'
 }
 
 
-def get_all_shops_list():
+def get_citylist():
+    '''
+    采集大众点评
+    @return: 
+    '''
+    dataDf = pd.DataFrame()
+    url = 'http://www.dianping.com/citylist'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+        'Cookie': '_lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; ua=Song%E5%93%A5; fspop=test; cy=160; cye=zhengzhou; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1611811621,1611884488,1611903467,1612152684; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612152702; _lxsdk_s=1775bc9b6dd-2a2-ac7-04a%7C%7C11',
+        'Host': 'www.dianping.com'
+    }
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        html = etree.HTML(res)
+        cityList_url = html.xpath('.//div[@class="findHeight"]//a/@href')
+        cityList_name = html.xpath('.//div[@class="findHeight"]//a/text()')
+        cityList_url = [x.replace('//www.dianping.com/', '') for x in cityList_url]
+        cityList_name = [x.replace('市', '') for x in cityList_name]
+        dataDf = pd.DataFrame({
+            'city_pinyin': cityList_url,
+            'city_name': cityList_name,
+        })
+    return dataDf
+
+
+def get_all_shops_list(pro_name):
     '''
     获取大众点评中每一个品类下面的所有商家列表
+    @param pro_name:省份名称
+    @return:
     '''
-
-    for city, city_name in conf.area_dict.items():
-        url = 'http://www.dianping.com/{}/ch10/g110'.format(city)
-        print(url)
-        '''
-        查询方法：
-        1:---》按照行政区来进行数据查询
-        0：---》按照类型下面的小分类方式进行查询
-        备注：建议按照行政区
-        '''
-        select_method = 1
-        if 0 == select_method:
-            pass
-        elif 1 == select_method:
-            # 获取城市的所有行政区 和 该城市已经采集过的行政区
-            regiondf = get_city_region(url)
-            print('采集到city={}的所有行政区为{}'.format(city_name, regiondf['area_name'].tolist()))
-            cityArea_already = dbmanager_dzdp.already_cityArea(city_name)
-            # 筛选出需要采集的城市区域
-            if not cityArea_already.empty:
-                spider_cityArea = regiondf[~regiondf['area_name'].isin(cityArea_already['area_name'].tolist())]
+    print('开始采集省份={}的数据信息'.format(pro_name))
+    pro_city_df = dbmanager_dzdp.get_pro_city(pro_name)
+    city_name_pinyin = get_citylist()
+    if not pro_city_df.empty and not city_name_pinyin.empty:
+        pro_city_df = pd.merge(pro_city_df, city_name_pinyin, on=['city_name'], how='left')
+    if not pro_city_df.empty:
+        for index, info in pro_city_df.iterrows():
+            city_pinyin = info['city_pinyin']
+            city_name = info['city_name']
+            url = 'http://www.dianping.com/{}/ch10/g110'.format(city_pinyin)
+            print('开始采集城市={}的数据信息'.format(city_name))
+            '''
+            查询方法：
+            1:---》按照行政区来进行数据查询
+            0：---》按照类型下面的小分类方式进行查询
+            备注：建议按照行政区
+            '''
+            select_method = 1
+            if 0 == select_method:
+                pass
+            elif 1 == select_method:
+                # 获取城市的所有行政区 和 该城市已经采集过的行政区
+                regiondf = get_city_region(url)
+                print('采集到city={}的所有行政区为{}'.format(city_name, regiondf['area_name'].tolist()))
+                cityArea_already = dbmanager_dzdp.already_cityArea(city_name)
+                # 筛选出需要采集的城市区域
+                if not cityArea_already.empty:
+                    spider_cityArea = regiondf[~regiondf['area_name'].isin(cityArea_already['area_name'].tolist())]
+                else:
+                    spider_cityArea = regiondf
             else:
-                spider_cityArea = regiondf
-        else:
-            spider_cityArea = pd.DataFrame({
-                'area_url': [url],
-                'area_name': [city_name]
-            })
-        if not spider_cityArea.empty:
-            print('需要采集的为：{}'.format(spider_cityArea))
-            for index, info in spider_cityArea.iterrows():
-                area_url = info['area_url']
-                area_name = info['area_name']
-                df_list = []
-                p_count = page_count(area_url)
-                for i in range(1, int(p_count) + 1):
-                    parse_url = area_url + 'p{}'.format(str(i))
-                    print('city={},area={},采集第{}页,url={}'.format(city_name, area_name, i, parse_url))
-                    try:
-                        program_time = datetime.now()
-                        global ip_df
-                        global s_time
-                        if (program_time - s_time).seconds > 60 * 13:
-                            ip_df = change_ipdf()
-                            s_time = program_time
-                            print('重新加载')
-                        proxies = change_IP(ip_df)
-                        # res = requests.get(parse_url, headers=headers_list,proxies=proxies)
-                        # print('status={},proxies={}'.format(res.status_code, proxies))
-                        res = requests.get(parse_url, headers=headers_list)
-                        print('status={},proxies='.format(res.status_code))
-                        res = res.content.decode()
-                        while '验证中心' in str(res):
-                            input('请向右拖动滑块')
-                            # res_new = requests.get(parse_url, headers=headers_list,proxies=proxies)
-                            # print('status={},proxies={}'.format(res_new.status_code, proxies))
-                            res_new = requests.get(parse_url, headers=headers_list)
-                            print('status={},proxies='.format(res_new.status_code))
-                            res = res_new.content.decode()
-                        html = etree.HTML(res)
-                        shop_name_list = html.xpath('.//div[@class="tit"]/a//h4//text()')
-                        shop_url_list = html.xpath('.//div[@class="tit"]/a/@href')
-                        shop_url_list = [x for x in shop_url_list if x.startswith('http://www.dianping.com/shop/')]
-                        shop_score_list = html.xpath('.//div[@class="nebula_star"]/div[2]/text()')
-                        shop_comments_list = html.xpath('.//div[@class="comment"]/a[@class="review-num"]//text()')
-                        shop_comments_list = [x.replace('\n', '').replace(' ', '') for x in shop_comments_list]
-                        print(len(shop_name_list), shop_name_list)
-                        print(len(shop_url_list), shop_url_list)
-                        # print(len(shop_score_list), shop_score_list)
-                        # print(len(shop_comments_list), shop_comments_list)
-                        every_page_df = pd.DataFrame({
-                            'shop_name': shop_name_list,
-                            'url': shop_url_list,
-                        })
-                        every_page_df['shop_id'] = every_page_df['url'].apply(
-                            lambda x: x.replace('http://www.dianping.com/shop/', ''))
-                        df_list.append(every_page_df)
-                        # time.sleep(3)
-                    except Exception as e:
-                        print('异常', e)
-                if df_list:
-                    allDf = pd.concat(df_list, axis=0)
-                    allDf['city'] = city_name
-                    allDf['shop_type'] = '火锅'
-                    if 1 == select_method:
-                        allDf['region'] = area_name
-                    in_bo = dbmanager_dzdp.save_dzdp_shoplist(allDf, select_method)
-                    print('Save to {},shape={},status={}'.format(conf.dzdp_shop_table, allDf.shape[0], in_bo))
+                spider_cityArea = pd.DataFrame({
+                    'area_url': [url],
+                    'area_name': [city_name]
+                })
+            if not spider_cityArea.empty:
+                print('需要采集的为：{}'.format(spider_cityArea))
+                for index, info in spider_cityArea.iterrows():
+                    area_url = info['area_url']
+                    area_name = info['area_name']
+                    df_list = []
+                    p_count = page_count(area_url)
+                    for i in range(1, int(p_count) + 1):
+                        parse_url = area_url + 'p{}'.format(str(i))
+                        print('city={},area={},采集第{}页,url={}'.format(city_name, area_name, i, parse_url))
+                        try:
+                            # program_time = datetime.now()
+                            # global ip_df
+                            # global s_time
+                            # if (program_time - s_time).seconds > 60 * 13:
+                            #     ip_df = change_ipdf()
+                            #     s_time = program_time
+                            #     print('重新加载')
+                            # proxies = change_IP(ip_df)
+                            # res = requests.get(parse_url, headers=headers_list,proxies=proxies)
+                            # print('status={},proxies={}'.format(res.status_code, proxies))
+                            res = requests.get(parse_url, headers=headers_list)
+                            print('status={},proxies='.format(res.status_code))
+                            res = res.content.decode()
+                            while '验证中心' in str(res):
+                                input('请向右拖动滑块')
+                                # res_new = requests.get(parse_url, headers=headers_list,proxies=proxies)
+                                # print('status={},proxies={}'.format(res_new.status_code, proxies))
+                                res_new = requests.get(parse_url, headers=headers_list)
+                                print('status={},proxies='.format(res_new.status_code))
+                                res = res_new.content.decode()
+                            html = etree.HTML(res)
+                            shop_name_list = html.xpath('.//div[@class="tit"]/a//h4//text()')
+                            shop_url_list = html.xpath('.//div[@class="tit"]/a/@href')
+                            shop_url_list = [x for x in shop_url_list if x.startswith('http://www.dianping.com/shop/')]
+                            shop_score_list = html.xpath('.//div[@class="nebula_star"]/div[2]/text()')
+                            shop_comments_list = html.xpath('.//div[@class="comment"]/a[@class="review-num"]//text()')
+                            shop_comments_list = [x.replace('\n', '').replace(' ', '') for x in shop_comments_list]
+                            print(len(shop_name_list), shop_name_list)
+                            print(len(shop_url_list), shop_url_list)
+                            # print(len(shop_score_list), shop_score_list)
+                            # print(len(shop_comments_list), shop_comments_list)
+                            every_page_df = pd.DataFrame({
+                                'shop_name': shop_name_list,
+                                'url': shop_url_list,
+                            })
+                            every_page_df['shop_id'] = every_page_df['url'].apply(
+                                lambda x: x.replace('http://www.dianping.com/shop/', ''))
+                            df_list.append(every_page_df)
+                            # time.sleep(3)
+                        except Exception as e:
+                            print('异常', e)
+                        time.sleep(5)
+                    if df_list:
+                        allDf = pd.concat(df_list, axis=0)
+                        allDf['city'] = city_name
+                        allDf['shop_type'] = '火锅'
+                        if 1 == select_method:
+                            allDf['region'] = area_name
+                        in_bo = dbmanager_dzdp.save_dzdp_shoplist(allDf, select_method)
+                        print('Save to {},shape={},status={}'.format(conf.dzdp_shop_table, allDf.shape[0], in_bo))
 
-        else:
-            print('city={}没有需要采集的行政区'.format(city_name))
+            else:
+                print('city={}没有需要采集的行政区'.format(city_name))
 
 
 def get_city_region(url):
@@ -154,10 +192,11 @@ def get_city_region(url):
     '''
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-        'Cookie': 'navCtgScroll=0; _lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; cye=nanjing; ua=Song%E5%93%A5; fspop=test; cy=5; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1605582236,1605591555,1605605140,1606371418; dplet=bffd22a916442e317384b63424dd9d36; dper=2d0d9e4d298453f1a91fc71b0b41074e1a957afe928bf1632fe20ad2be3a57b3227193234621812bf9fe038bf45a2c6c79d456664de463d73bd11b1a93e14ed1f480b7919d8aaeeb3bc5eb1b5c24a6e529f62a1f321419d7c45761f0c435ad8d; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; _lxsdk_s=17603329d06-d15-c9e-711%7C%7C208; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1606372328',
+        'Cookie': 's_ViewType=10; _lxsdk_cuid=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _lxsdk=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _hc.v=560e1bcd-38c8-dafc-36fb-ba7a02368013.1612413651; fspop=test; cy=5; cye=nanjing; ctu=c6a16fefdaffcb0927e88c1a28a2fd7c8a4a56842d548900dec7c3150847539f; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; dper=5c306da43ba500e1c29230b5f8d70333995867679261f0cb0bbecf84d8414a30935994b2240c8344d48db7cd4b540af1e2b8552089b4e013f3a73c3bce9736956fdb548761903bc0f002b48f544d1fcd9e1b0fa07b4a620d471058a3b9af6b76; ua=Song%E5%93%A5; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612425507,1612487239,1612494540,1612501794; dplet=0382bf098b5c9d2829c4137c71fc7a5d; _lxsdk_s=17770b889cd-0fd-2e8-d2a%7C%7C77; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612506807',
         'Host': 'www.dianping.com'
     }
     df = pd.DataFrame()
+    print(url)
     res = requests.get(url, headers=headers)
     if 200 == res.status_code:
         res = res.content.decode()
@@ -411,6 +450,8 @@ def allfile_toexcel():
 
 
 if __name__ == '__main__':
-    ip_df = change_ipdf()
-    s_time = datetime.now()
-    get_all_shops_list()
+    pro_name = '山东省'
+
+    # ip_df = change_ipdf()
+    # s_time = datetime.now()
+    get_all_shops_list(pro_name)

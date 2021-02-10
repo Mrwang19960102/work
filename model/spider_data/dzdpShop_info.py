@@ -16,15 +16,16 @@ from lxml import etree
 from datetime import datetime
 from multiprocessing import Pool
 from model.spider_data import tools, conf
+from model.spider_data import baidu_data_map
 from model.spider_data.dao import dbmanager_dzdp
 from model.spider_data.change_IP import change_ipdf, change_IP
 
 headers = {
     'Host': 'www.dianping.com',
+    # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.53',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-    'Cookie': '_lxsdk_cuid=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _lxsdk=173ff7d706188-077c53bf069b0e-7a1437-100200-173ff7d7062c8; _hc.v=988add77-4561-fac0-8537-5c5e93a36451.1597719278; s_ViewType=10; aburl=1; __utma=1.1058588512.1597720339.1597720339.1597720339.1; __utmz=1.1597720339.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); ctu=9b1f465040be0773106db2215a3dccfe8202cfd8432c82a331683c3ac2f8b056; ua=Song%E5%93%A5; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; fspop=test; cy=5; cye=nanjing; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1610515452,1610947975,1610951352,1611018359; _lxsdk_s=177193e0cc1-b8f-b01-e49%7C%7C18; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1611036239; dplet=21bc45507899eff9265b403f5385ad3a; dper=fc09c43f16b3c496cb53b49958290276fc145177ba67784da69df8e66dec0d8f66089286f63eb961b16c6362aa4e57760106cdd3d096a2700bb9b3f18bbfa9b3c1488e04f1810abcbd6d042b696797e292392060f2669931f7ae8c4c8b33fa54; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925'
+    'Cookie': 's_ViewType=10; _lxsdk_cuid=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _lxsdk=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _hc.v=560e1bcd-38c8-dafc-36fb-ba7a02368013.1612413651; fspop=test; ctu=c6a16fefdaffcb0927e88c1a28a2fd7c8a4a56842d548900dec7c3150847539f; ua=Song%E5%93%A5; cy=1147; cye=gaomi; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612832357,1612848313,1612851673,1612937326; lgtoken=0f0b53b31-1db4-4f1d-ad6d-1b5313eee03e; dper=5c306da43ba500e1c29230b5f8d70333c83c7123c3132aab835a330b20d2b82225ccc7fc7a21642b65c2d05122e027773cd9bc141e1c8742dbb9ef7c146ec78bcd8fc59842c938ebfb5cf6a0df04b012671a407ca89a72bee0bf8d11870fee0f; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; dplet=aa2030b55af4c963755a71eaee64a073; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612939021; _lxsdk_s=1778a8e6de1-8db-a55-416%7C%7C155'
 }
-
 
 
 # 手机号等商铺详情信息采集
@@ -34,33 +35,79 @@ def spider_info():
     @return:
     '''
     # 获取结果表中已经获取过的手机号
-    shopInfo_already = dbmanager_dzdp.get_alreadyshop_info()
-    # 获取大众点评店铺列表表的全部店铺id
-    shopall_df = dbmanager_dzdp.get_all_shop()
-    '''
-    筛选出需要采集的店铺
-    '''
-    if not shopInfo_already.empty:
-        need_shop_df = shopall_df[~shopall_df['shop_id'].isin(shopInfo_already['shop_id'].tolist())]
-    else:
-        need_shop_df = shopall_df
+    need_shop_df = dbmanager_dzdp.get_needshop_info()
+
     if not need_shop_df.empty:
         '''
         采集手机号
         '''
+        t1 = datetime.now()
         all_data = []
+        print('一共需要采集url个数为：{}'.format(len(need_shop_df)))
         for index, info in need_shop_df.iterrows():
             every_data = []
             shop_id = info['shop_id']
             shop_url = info['url']
-            phone_list = phone_api(shop_id)
-            # phone_list = shop_infos(shop_url)
+            phone_list = []
+            try:
+                # phone_list = phone_api(shop_id)
+                phone_list = shop_infos(shop_url)
+            except Exception as e:
+                print('异常：{}'.format(e))
             if phone_list:
                 every_data.append(shop_id)
                 every_data.append(phone_list)
                 all_data.append(every_data)
-                print(every_data)
+                print('index={},data={}'.format(index, every_data))
             if len(all_data) == 10:
+                save_df = pd.DataFrame(all_data, columns=['shop_id', 'phone'])
+                save_df['phone'] = save_df['phone'].astype(str)
+                inbo = dbmanager_dzdp.save_dzdp_phone_data(save_df)
+                print('save data to {}，shape={},status={}'.format(conf.dzdp_shop_phone_table, save_df.shape[0], inbo))
+                all_data = []
+            time.sleep(5)
+
+
+def spider_info2():
+    '''
+    采集商铺的信息
+    @return:
+    '''
+    # 获取结果表中已经获取过的手机号
+    need_shop_df = dbmanager_dzdp.get_needshop_info2()
+
+    if not need_shop_df.empty:
+        '''
+        采集手机号
+        '''
+        t1 = datetime.now()
+        all_data = []
+        print('一共需要采集url个数为：{}'.format(len(need_shop_df)))
+        for index, info in need_shop_df.iterrows():
+            every_data = []
+            shop_id = info['shop_id']
+            shop_name = info['shop_name']
+            shop_url = info['url']
+            city = info['city']
+            print(shop_url)
+            if '市' in city:
+                pass
+            else:
+                city = city + '市'
+            region = info['region']
+            phone_list = []
+            try:
+                # phone_list = phone_api(shop_id)
+                # phone_list = shop_infos(shop_url)
+                phone_list = baidu_data_map.shop_phone_dzdp(shop_name, city, region)
+            except Exception as e:
+                print('异常：{}'.format(e))
+            if phone_list:
+                every_data.append(shop_id)
+                every_data.append(phone_list)
+                all_data.append(every_data)
+                print('index={},data={}'.format(index, every_data))
+            if len(all_data) == 50:
                 save_df = pd.DataFrame(all_data, columns=['shop_id', 'phone'])
                 save_df['phone'] = save_df['phone'].astype(str)
                 inbo = dbmanager_dzdp.save_dzdp_phone_data(save_df)
@@ -121,22 +168,23 @@ def phone_api(shop_id):
     '''
     phone_list = []
     url = 'http://www.dianping.com/ajax/json/shopDynamic/basicHideInfo?shopId={}'.format(shop_id)
-    print(url)
-    program_time = datetime.now()
-    global ip_df
-    global s_time
-    if (program_time - s_time).seconds > 60 * 13:
-        ip_df = change_ipdf()
-        s_time = program_time
-        print('重新加载')
-    proxies = change_IP(ip_df)
-    res = requests.get(url, headers=headers, proxies=proxies)
-    print(res.status_code, proxies)
+    # program_time = datetime.now()
+    # global ip_df
+    # global s_time
+    # if (program_time - s_time).seconds > 60 * 25:
+    #     ip_df = change_ipdf()
+    #     s_time = program_time
+    #     print('重新加载')
+    # proxies = change_IP(ip_df)
+    # res = requests.get(url, headers=headers,proxies=proxies)
+    # print('status:{},ip={},url:{}'.format(res.status_code, proxies,url))
+    res = requests.get(url, headers=headers)
+    print('status:{},url:{}'.format(res.status_code,url))
     if 200 == res.status_code:
         res = res.content.decode()
         while '验证' in res:
             input('滑动验证：{}'.format(url))
-            res_new = requests.get(url, headers=headers, proxies=proxies)
+            res_new = requests.get(url, headers=headers)
             if 200 == res_new.status_code:
                 res = res_new.content.decode()
         # 破解手机号数字字体加密
@@ -167,27 +215,28 @@ def shop_infos(url):
     '''
     telephone = ''
     program_time = datetime.now()
-    global ip_df
-    global s_time
-    if (program_time - s_time).seconds > 60 * 13:
-        ip_df = change_ipdf()
-        s_time = program_time
-        print('重新加载')
-    proxies = change_IP(ip_df)
-    # res = requests.get(url, headers=headers)
-    # print('状态码：{},proxies=,url={}'.format(res.status_code, url))
-    res = requests.get(url, headers=headers, proxies=proxies)
-    print('状态码：{},proxies={},url={}'.format(res.status_code, proxies, url))
+    # global ip_df
+    # global s_time
+    # if (program_time - s_time).seconds > 60 * 13:
+    #     ip_df = change_ipdf()
+    #     s_time = program_time
+    #     print('重新加载')
+    # proxies = change_IP(ip_df)
+    res = requests.get(url, headers=headers)
+    print('状态码：{},proxies=,url={}'.format(res.status_code, url))
+    # res = requests.get(url, headers=headers, proxies=proxies)
+    # print('状态码：{},proxies={},url={}'.format(res.status_code, proxies, url))
     if 200 == res.status_code:
         res = res.content.decode()
         if '验证中心' in str(res):
-            input('请向右拖动滑块')
-            res = requests.get(url, headers=headers, proxies=proxies).content.decode()
+            input('验证中心：请向右拖动滑块')
+            # res = requests.get(url, headers=headers, proxies=proxies).content.decode()
+            res = requests.get(url, headers=headers).content.decode()
         elif '页面不存在' in str(res):
-            return
-
+            print('页面不存在')
+            res = requests.get(url, headers=headers).content.decode()
         # 获取数字加密映射关系
-        num = tools.get_num_font('c67e58f2.woff')
+        num = tools.get_num_font('4e9edb2d.woff')
         for key in num:
             if key in res:
                 res = res.replace(key, str(num[key]))
@@ -231,7 +280,10 @@ def shop_infos(url):
 
     return telephone
 
+
 '-------------------------------------------------------------------------------------------------------------------------'
+
+
 def get_comment_map(svg_link, status=0):
     '''
     根据样式链接获取每个字体对应的映射关系
@@ -339,7 +391,6 @@ def get_font_map_data(url):
     return font_map_df
 
 
-
 def commments_info(url, count_comment):
     '''
     爬取评论信息
@@ -407,7 +458,6 @@ def commments_info(url, count_comment):
         print('没有获取到加密字体映射数据')
 
 
-
 def allfile_toexcel():
     '''
     读取所有的excel文件合并为一个excel文件
@@ -420,7 +470,7 @@ def allfile_toexcel():
 
 
 if __name__ == '__main__':
-    ip_df = change_ipdf()
+    # ip_df = change_ipdf()
     s_time = datetime.now()
     # 获取手机号
     spider_info()

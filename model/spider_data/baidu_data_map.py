@@ -63,10 +63,7 @@ def search_baidu_map_data(pro_list):
     area_df = area_df[['prov_code', 'prov_name', 'city_code', 'city_name', 'coun_code', 'coun_name']]
     area_df.drop_duplicates(inplace=True)
     area_df = area_df[area_df['prov_name'].isin(pro_list)]
-    area_df = area_df[~area_df['city_name'].isin(['成都市'])]
     for pw in ['火锅', '麻辣烫', '串串香', '烤鱼']:
-    # for pw in ['星巴克']:
-        # pw = '火锅'
         # 获取已经计算过的区域
         already_df = dbmanager_baidu.already_area(pw)
         if not already_df.empty:
@@ -137,6 +134,7 @@ def searchData_api_BD(pw, region):
     url = "http://api.map.baidu.com/place/v2/search?query={}&page_size=20&scope=1&region={}&output=json&ak=".format(
         pw, region) + ak
     print(url)
+    input()
     params = {'page_num': 0}  # 请求参数，页码
     request = requests.get(url, params=params)  # 请求数据
     if 200 == request.status_code:
@@ -184,58 +182,109 @@ def deal_phone():
     处理手机号
     @return:
     '''
-    sql = """SELECT DISTINCT shop_name,address,prov_name,city_name,phone
-    FROM `map_baidu_data_copy`
-    WHERE prov_name IN ('河南省', '山东省') and phone!='' ORDER BY prov_name,city_name """
-    res = dbhandler.get_date(sql, conf.map_baidu_data_table)
-    if res:
-        df = pd.DataFrame(list(res), columns=['shop_name', 'address', 'prov_name', 'city_name', 'phone'])
-        print(df)
-        allData = []
-        for index, info in df.iterrows():
-            shop_name = info['shop_name']
-            address = info['address']
-            prov_name = info['prov_name']
-            city_name = info['city_name']
-            # coun_name = info['coun_name']
-            phone = info['phone']
-            if len(phone) > 15:
-                # print(phone)
-                phone_list = phone.split(',')
-                print(phone_list)
-                for p in phone_list:
-                    every_data = []
-                    every_data.append(shop_name)
-                    every_data.append(address)
-                    every_data.append(prov_name)
-                    every_data.append(city_name)
-                    # every_data.append(coun_name)
-                    every_data.append(p)
-                    print(every_data)
-                    allData.append(every_data)
-            else:
+    df = pd.read_excel('./广西福建数据.xlsx')
+    # df = pd.DataFrame(list(res), columns=['shop_name', 'address', 'prov_name', 'city_name', 'phone'])
+    print(df)
+    allData = []
+    for index, info in df.iterrows():
+        shop_name = info['shop_name']
+        address = info['address']
+        prov_name = info['prov_name']
+        phone = info['phone']
+        if len(phone) > 15:
+            phone_list = []
+            for symbol in [',', ';']:
+                if symbol in phone:
+                    phone_list = phone.split(symbol)
+                    print(phone_list)
+                    break
+            for p in phone_list:
                 every_data = []
                 every_data.append(shop_name)
                 every_data.append(address)
                 every_data.append(prov_name)
-                every_data.append(city_name)
                 # every_data.append(coun_name)
-                every_data.append(phone)
+                every_data.append(p)
                 print(every_data)
                 allData.append(every_data)
-        allDf = pd.DataFrame(allData, columns=['shop_name', 'address', 'prov_name', 'city_name', 'phone'])
-        allDf['len'] = allDf['phone'].apply(lambda x: len(x))
-        allDf = allDf[allDf['len'] == 11]
-        allDf = allDf[['shop_name', 'address', 'prov_name', 'city_name', 'phone']]
-        allDf.drop_duplicates(inplace=True)
-        allDf.to_excel('./百度地图数据山东河南.xlsx', index=False)
+        else:
+            every_data = []
+            every_data.append(shop_name)
+            every_data.append(address)
+            every_data.append(prov_name)
+            # every_data.append(coun_name)
+            every_data.append(phone)
+            print(every_data)
+            allData.append(every_data)
+    allDf = pd.DataFrame(allData, columns=['shop_name', 'address', 'prov_name', 'phone'])
+    allDf['len'] = allDf['phone'].apply(lambda x: len(x))
+    allDf = allDf[allDf['len'] == 11]
+    allDf = allDf[['shop_name', 'address', 'prov_name', 'phone']]
+    allDf.drop_duplicates(inplace=True)
+    tel_list = []
+    allData_send = []
+    for i, info in allDf.iterrows():
+        every_data = []
+        shop_name = info['shop_name']
+        address = info['address']
+        prov_name = info['prov_name']
+        phone = info['phone']
+        if phone not in tel_list:
+            every_data.append(shop_name)
+            every_data.append(address)
+            every_data.append(prov_name)
+            every_data.append(phone)
+            tel_list.append(phone)
+            allData_send.append(every_data)
+
+    if allData_send:
+        send_df = pd.DataFrame(allData_send, columns=['shop_name', 'address', 'prov_name', 'phone'])
+        send_df.to_excel('./222.xlsx', index=False)
+
+
+def shop_phone_dzdp(shop_name, city, region):
+    '''
+    大众点评调用
+    @param shop_name:店铺名称
+    @param city: 城市名称
+    @param region: 行政区
+    @return:
+    '''
+    phone = None
+    ak = "kG7mgYDk9p5FX5EM3Y6yL9nK73O4lhPv"  # 换成自己的 AK，需要申请
+    url = "http://api.map.baidu.com/place/v2/search?query={}&page_size=20&scope=1&region={}&output=json&ak=".format(
+        shop_name, city + region) + ak
+    print(url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
+    }
+    res = requests.get(url, headers=headers)
+    if 200 == res.status_code:
+        res = res.content.decode()
+        info_json = json.loads(res)
+        total = info_json['total']
+        data = info_json['results']
+        for every_data in data:
+            name_res = every_data['name']
+            city_res = every_data['city']
+            area_res = every_data['area']
+            if name_res == shop_name and city_res == city and area_res == region:
+                if 'telephone' in list(every_data.keys()):
+                    phone = every_data['telephone']
+                # else:
+                #     phone = '无添加'
+    return phone
 
 
 if __name__ == '__main__':
-    pro_list = ['四川省']
+    pro_list = ['福建省', '广西省']
     # deal_phone()
     # print(len(set(df['phone'].tolist())))
-    search_baidu_map_data(pro_list)
+    # search_baidu_map_data(pro_list)
     # pw = '火锅'
     # region = '南京市江宁区'
     # searchData_api_BD(pw, region)
+    shop_name = '围辣菌汤小火锅'
+    city = '郑州市'
+    region = '二七区'
+    shop_phone_dzdp(shop_name, city, region)

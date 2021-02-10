@@ -23,3 +23,5 @@ max_con_number = 10
 kaiyuan_table = 'kaiyuan'
 kaiyuan_info_table = 'kaiyuan_info'
 kaiyuan_comment_table = 'kaiyuan_comment'
+stack_overflow_table = 'stack_overflow'
+stack_answer_table = 'stack_answer'

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # @File:       |   dbhandler.py 
-# @Date:       |   2020/7/20 10:04
+# @Date:       |   2021/01/23 02:04
 # @Author:     |   ThinkPad
 # @Desc:       |  数据库连接等操作
 import time
 import pymysql
-from model.spider_data.conf import *
+from model.pratice.warehouse.conf import *
 
 conn_src = None
 conn_dest = None

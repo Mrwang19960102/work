@@ -19,19 +19,25 @@ db_dest_conf = dict(cf.items('db_dest'))
 max_con_number = 10
 
 area_dict = {
-    'tianjin': '天津'
+    # 'guangzhou': '广州',
+    'hangzhou': '杭州',
+    'suzhou': '苏州',
+    'chengdu': '成都',
+    'wuhan': '武汉',
+    'chongqing': '重庆',
+    'xian': '西安',
 }
 # 手机号字体加密对应字典
 num_dict = {
-    'ea1a': 0,
-    'f6f3': 2,
-    'f304': 3,
-    'f567': 4,
-    'e3d2': 5,
-    'ea4d': 6,
-    'e860': 7,
-    'e1bf': 8,
-    'f08c': 9,
+    'e2bc': 0,
+    'f582': 2,
+    'ed4c': 3,
+    'e911': 4,
+    'e51e': 5,
+    'e359': 6,
+    'e7f5': 7,
+    'f0c5': 8,
+    'ebc8': 9,
 }
 
 qiye_data_table = 'qiye_data'
