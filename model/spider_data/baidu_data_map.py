@@ -63,7 +63,7 @@ def search_baidu_map_data(pro_list):
     area_df = area_df[['prov_code', 'prov_name', 'city_code', 'city_name', 'coun_code', 'coun_name']]
     area_df.drop_duplicates(inplace=True)
     area_df = area_df[area_df['prov_name'].isin(pro_list)]
-    for pw in ['火锅', '麻辣烫', '串串香', '烤鱼']:
+    for pw in ['火锅', '麻辣烫', '串串香', '烤鱼', '龙虾', '小龙虾']:
         # 获取已经计算过的区域
         already_df = dbmanager_baidu.already_area(pw)
         if not already_df.empty:
@@ -89,8 +89,9 @@ def search_baidu_map_data(pro_list):
                 items = []  # 存放所有的记录，每一条记录是一个元素
                 for i in range(total_page_num):
                     params['page_num'] = i
-                    request = requests.get(url, params=params)
-                    for item in json.loads(request.text, strict=False)['results']:
+                    res = requests.get(url, params=params)
+                    print(res.text)
+                    for item in json.loads(res.text, strict=False)['results']:
                         if "telephone" in item:
                             # telephone = item['telephone']
                             name = item['name']
@@ -277,14 +278,14 @@ def shop_phone_dzdp(shop_name, city, region):
 
 
 if __name__ == '__main__':
-    pro_list = ['福建省', '广西省']
+    pro_list = ['北京市', '江苏省', '上海市']
     # deal_phone()
     # print(len(set(df['phone'].tolist())))
-    # search_baidu_map_data(pro_list)
+    search_baidu_map_data(pro_list)
     # pw = '火锅'
     # region = '南京市江宁区'
     # searchData_api_BD(pw, region)
-    shop_name = '围辣菌汤小火锅'
-    city = '郑州市'
-    region = '二七区'
-    shop_phone_dzdp(shop_name, city, region)
+    # shop_name = '围辣菌汤小火锅'
+    # city = '郑州市'
+    # region = '二七区'
+    # shop_phone_dzdp(shop_name, city, region)

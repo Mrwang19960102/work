@@ -22,9 +22,9 @@ from model.spider_data.change_IP import change_ipdf, change_IP
 
 headers = {
     'Host': 'www.dianping.com',
-    # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.53',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-    'Cookie': 's_ViewType=10; _lxsdk_cuid=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _lxsdk=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _hc.v=560e1bcd-38c8-dafc-36fb-ba7a02368013.1612413651; fspop=test; ctu=c6a16fefdaffcb0927e88c1a28a2fd7c8a4a56842d548900dec7c3150847539f; ua=Song%E5%93%A5; cy=1147; cye=gaomi; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612832357,1612848313,1612851673,1612937326; lgtoken=0f0b53b31-1db4-4f1d-ad6d-1b5313eee03e; dper=5c306da43ba500e1c29230b5f8d70333c83c7123c3132aab835a330b20d2b82225ccc7fc7a21642b65c2d05122e027773cd9bc141e1c8742dbb9ef7c146ec78bcd8fc59842c938ebfb5cf6a0df04b012671a407ca89a72bee0bf8d11870fee0f; ll=7fd06e815b796be3df069dec7836c3df; uamo=15195903925; dplet=aa2030b55af4c963755a71eaee64a073; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612939021; _lxsdk_s=1778a8e6de1-8db-a55-416%7C%7C155'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.53',
+    # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+    'Cookie': '_lxsdk=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; _lxsdk_cuid=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; s_ViewType=10; _hc.v=e5b4b74a-1b1f-54dd-2d0c-1b6cc0fc8055.1612425530; ua=Song%E5%93%A5; ctu=c6a16fefdaffcb0927e88c1a28a2fd7cbd59e65223c0b3bbdb009bc6e2f13ba9; aburl=1; cye=shouguang; cy=1150; fspop=test; dper=39655a07632153ab0e8278b5b4ec482b6f3b8a4dc2eb4b71c1cf737961af65d3391a774fa0c45b352a3e56a94a56ee0b975f938a89cbba61c1f7a8c0eb72d4290e5b5ab31d88ba6aa1374b518a9e82ac4b34091ab794d399890ce1d684fb3058; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612918833,1613956134,1614041843,1614044056; dplet=c6a5d6f4c72ff2e3886a7c4bff6b309d; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1614048970; _lxsdk_s=177ccd0a161-3b6-843-c27%7C%7C51'
 }
 
 
@@ -236,7 +236,7 @@ def shop_infos(url):
             print('页面不存在')
             res = requests.get(url, headers=headers).content.decode()
         # 获取数字加密映射关系
-        num = tools.get_num_font('4e9edb2d.woff')
+        num = tools.get_num_font('9f702fd5.woff')
         for key in num:
             if key in res:
                 res = res.replace(key, str(num[key]))

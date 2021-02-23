@@ -192,7 +192,7 @@ def get_city_region(url):
     '''
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-        'Cookie': 's_ViewType=10; _lxsdk_cuid=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _lxsdk=1776b479ff9c8-02fe0c115d7873-7a1437-100200-1776b479ff917; _hc.v=560e1bcd-38c8-dafc-36fb-ba7a02368013.1612413651; fspop=test; cy=5; cye=nanjing; ctu=c6a16fefdaffcb0927e88c1a28a2fd7c8a4a56842d548900dec7c3150847539f; _lx_utm=utm_source%3DBaidu%26utm_medium%3Dorganic; dper=5c306da43ba500e1c29230b5f8d70333995867679261f0cb0bbecf84d8414a30935994b2240c8344d48db7cd4b540af1e2b8552089b4e013f3a73c3bce9736956fdb548761903bc0f002b48f544d1fcd9e1b0fa07b4a620d471058a3b9af6b76; ua=Song%E5%93%A5; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612425507,1612487239,1612494540,1612501794; dplet=0382bf098b5c9d2829c4137c71fc7a5d; _lxsdk_s=17770b889cd-0fd-2e8-d2a%7C%7C77; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1612506807',
+        'Cookie': '_lxsdk=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; _lxsdk_cuid=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; s_ViewType=10; _hc.v=e5b4b74a-1b1f-54dd-2d0c-1b6cc0fc8055.1612425530; ua=Song%E5%93%A5; ctu=c6a16fefdaffcb0927e88c1a28a2fd7cbd59e65223c0b3bbdb009bc6e2f13ba9; aburl=1; cye=shouguang; cy=1150; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612774897,1612851709,1612918833,1613956134; _lxsdk_s=177c74832b1-727-ce3-268%7C%7C40; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1613956162',
         'Host': 'www.dianping.com'
     }
     df = pd.DataFrame()
@@ -200,7 +200,7 @@ def get_city_region(url):
     res = requests.get(url, headers=headers)
     if 200 == res.status_code:
         res = res.content.decode()
-        while '页面不存在' in str(res):
+        while '验证中心' in str(res):
             input('url={},请向右拖动滑块'.format(url))
             res = requests.get(url, headers=headers).content.decode()
         html = etree.HTML(res)
@@ -450,7 +450,7 @@ def allfile_toexcel():
 
 
 if __name__ == '__main__':
-    pro_name = '山东省'
+    pro_name = '江苏省'
 
     # ip_df = change_ipdf()
     # s_time = datetime.now()
