@@ -96,7 +96,7 @@ def deal_phone2(pro_list):
     df1 = pd.read_excel('./百度数据_北上江苏.xlsx')
     df = pd.read_excel('./无标题.xlsx')
     df = df[['shop_name', 'city', 'phone']]
-    df['address']=''
+    df['address'] = ''
     df.drop_duplicates(inplace=True)
 
     for index, info in df.iterrows():
@@ -108,7 +108,7 @@ def deal_phone2(pro_list):
         if len(phone) > 15:
             print(phone)
             phone_list = []
-            for symbol in [',', ';',' ']:
+            for symbol in [',', ';', ' ']:
                 if symbol in phone:
                     phone_list = phone.split(symbol)
                     print(phone_list)
@@ -152,19 +152,28 @@ def deal_phone2(pro_list):
         send_df = pd.DataFrame(allData_send, columns=['shop_name', 'address', 'prov_name', 'phone'])
         send_df.to_excel('./百度数据_北上江苏2.xlsx', index=False)
 
-def get_shop_info():
-    prov_city_df = dbmanager_gaode.get_need_city()
-    # 获取已经计算过的城市
-    al_prov_city = dbmanager_gaode.al_prov_city()
-    need_prov_city = prov_city_df[~prov_city_df['city_name'].isin(al_prov_city)]
-    print(need_prov_city['city_name'].tolist())
+
+def get_shop_info(pro_list, pw_list):
+    prov_city_df = dbmanager_gaode.get_need_city(pro_list)
+    # 获取已经计算过的城市乡镇
+    al_city_coun = dbmanager_gaode.al_prov_city(1)
+    if not al_city_coun.empty:
+        prov_city_df = prov_city_df.append(al_city_coun)
+        prov_city_df = prov_city_df.append(al_city_coun)
+        need_prov_city = prov_city_df.drop_duplicates(subset=['coun_code', 'coun_name'], keep=False)
+    else:
+        need_prov_city = prov_city_df
     if not need_prov_city.empty:
         for index, info in need_prov_city.iterrows():
-            city = info['city_name']
+            city_code = info['city_code']
+            city_name = info['city_name']
+            prov_code = info['prov_code']
             prov_name = info['prov_name']
-            for pw in ['火锅', '烤鱼', '麻辣烫', '串串香', '小龙虾', '龙虾']:
+            coun_code = info['coun_code']
+            coun_name = info['coun_name']
+            for pw in pw_list:
                 for page in range(1, 50):
-                    print('采集city={},pw={}数据'.format(city, pw))
+                    print('采集city={},coun_name={},pw={}数据'.format(city_name, coun_name, pw))
                     shopName_list = []
                     shopAddress_list = []
                     shopTel_list = []
@@ -172,7 +181,7 @@ def get_shop_info():
                     key = '514dff9359c2d332b294c8997ecd7719'  # peng
                     # key = 'b5c93eda62217cd84f6c4f37a4488c26'  #song
                     url = 'https://restapi.amap.com/v3/place/text?keywords={}&city={}&output=xml&offset=20&page={}&key={}&extensions=all'.format(
-                        pw, city, page, key)
+                        pw, city_name, page, key)
                     print(url)
                     params = {
                         # 'key': 'b5c93eda62217cd84f6c4f37a4488c26',
@@ -211,11 +220,18 @@ def get_shop_info():
                             'address': shopAddress_list,
                             'phone': shopTel_list,
                         })
-                        df['city_name'] = city
                         df['prov_name'] = prov_name
+                        df['prov_code'] = prov_code
+                        df['city_code'] = city_code
+                        df['city_name'] = city_name
+                        df['coun_code'] = coun_code
+                        df['coun_name'] = coun_name
+                        df['s_type'] = 1
+                        df['shop_type'] = pw
                         df['phone'] = df['phone'].astype(str)
-                        df['prov_name'] = df['prov_name'].astype(str)
-                        df['city_name'] = df['city_name'].astype(str)
+                        df['prov_code'] = df['prov_code'].astype(str)
+                        df['city_code'] = df['city_code'].astype(str)
+                        df['coun_code'] = df['coun_code'].astype(str)
                         df['address'] = df['address'].astype(str)
                         in_bo = dbmanager_gaode.save_gaode_phone_data(df)
                         print('save data to {},status={},shape={}'.format(conf.gaodemap_baidu_data_table, in_bo,
@@ -223,7 +239,9 @@ def get_shop_info():
                     else:
                         break
 
+
 if __name__ == '__main__':
-    get_shop_info()
-    pro_list = ['北京市','上海市','江苏省']
+    pro_list = ['北京市', '上海市', '江苏省']
+    pw_list = ['火锅', '烤鱼', '麻辣烫', '串串香', '小龙虾', '龙虾']
+    get_shop_info(pro_list, pw_list)
     deal_phone(pro_list)

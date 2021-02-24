@@ -10,37 +10,39 @@ from model.spider_data import conf
 from model.spider_data.dao import dbhandler
 
 
-def get_need_city():
+def get_need_city(pro_list):
     '''
     获取需要的城市
     @return:
     '''
     df = pd.DataFrame()
     table_name = conf.area_division_table
-    sql = '''SELECT DISTINCT prov_name,coun_name FROM {} where prov_name in ('福建省','广西壮族自治区') order by prov_name'''.format(
-        table_name)
+    if 1 == len(pro_list):
+        sql = '''SELECT DISTINCT prov_code,prov_name,city_code,city_name,coun_code,coun_name FROM {} 
+        where prov_name in {} order by prov_name'''.format(table_name, pro_list[0])
+    else:
+        sql = '''SELECT DISTINCT prov_code,prov_name,city_code,city_name,coun_code,coun_name FROM {} 
+        where prov_name in {} order by prov_name'''.format(table_name, tuple(pro_list))
     res = dbhandler.get_date(sql, table_name)
-    print(res)
     if res:
-        df = pd.DataFrame(list(res), columns=['prov_name', 'city_name'])
+        df = pd.DataFrame(list(res), columns=['prov_code', 'prov_name', 'city_code',
+                                              'city_name', 'coun_code', 'coun_name'])
     return df
 
 
-def al_prov_city():
+def al_prov_city(s_type, pw):
     '''
     获取数据库中已经计算过的城市
     @return:
     '''
-    city_list = []
+    df = pd.DataFrame()
     table_name = conf.gaodemap_baidu_data_table
-    sql = '''SELECT DISTINCT city_name FROM {} '''.format(
-        table_name)
+    sql = '''SELECT DISTINCT coun_code,coun_name FROM {} where s_type={} and shop_type='{}' '''.format(
+        table_name, s_type, pw)
     res = dbhandler.get_date(sql, table_name)
-    print(res)
     if res:
-        df = pd.DataFrame(list(res), columns=['city_name'])
-        city_list = df['city_name'].tolist()
-    return city_list
+        df = pd.DataFrame(list(res), columns=['coun_code', 'coun_name'])
+    return df
 
 
 def save_gaode_phone_data(data_df):
