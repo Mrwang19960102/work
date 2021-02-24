@@ -10,7 +10,7 @@ import json
 import pandas as pd
 from lxml import etree
 from model.spider_data import conf
-from model.spider_data.dao import dbhandler, dbmanager_baidu
+from model.spider_data.dao import dbmanager_baidu, dbmanager_gaode
 
 
 def shops_list(parameter):
@@ -51,7 +51,7 @@ def shops_list(parameter):
         print(phone[0])
 
 
-def search_baidu_map_data(pro_list):
+def search_baidu_map_data(pro_list, pw_list):
     '''
     获取指定省份的数据信息
     @param pro_list:
@@ -59,18 +59,19 @@ def search_baidu_map_data(pro_list):
     '''
     ak = "kG7mgYDk9p5FX5EM3Y6yL9nK73O4lhPv"  # 换成自己的 AK，需要申请
     # ak = "0GXHE8iEvBAYcRWLNwTWZuCxHR9zpqPd"  # 换成自己的 AK，需要申请   wei
-    area_df = pd.read_excel('../reference_data/行政区划乡镇清单.xlsx')
-    area_df = area_df[['prov_code', 'prov_name', 'city_code', 'city_name', 'coun_code', 'coun_name']]
-    area_df.drop_duplicates(inplace=True)
-    area_df = area_df[area_df['prov_name'].isin(pro_list)]
-    for pw in ['火锅', '麻辣烫', '串串香', '烤鱼', '龙虾', '小龙虾']:
-        # 获取已经计算过的区域
-        already_df = dbmanager_baidu.already_area(pw)
-        if not already_df.empty:
-            need_area_df = area_df[~area_df['coun_code'].isin(already_df['coun_code'].tolist())]
+    prov_city_df = dbmanager_gaode.get_need_city(pro_list)
+    for pw in pw_list:
+        # 获取pw店铺类型已经计算过的城市乡镇
+        al_city_coun = dbmanager_gaode.al_prov_city(2, pw)
+        if not al_city_coun.empty:
+            prov_city_df_new = prov_city_df.append(al_city_coun)
+            prov_city_df_new = prov_city_df_new.append(al_city_coun)
+            need_prov_city = prov_city_df_new.drop_duplicates(subset=['coun_code', 'coun_name'], keep=False)
         else:
-            need_area_df = area_df
-        for index, info in need_area_df.iterrows():
+            need_prov_city = prov_city_df
+        print('pw={}需要采集的城镇有：'.format(pw))
+        print(need_prov_city)
+        for index, info in need_prov_city.iterrows():
             prov_code = info['prov_code']
             prov_name = info['prov_name']
             city_name = info['city_name']
@@ -90,7 +91,6 @@ def search_baidu_map_data(pro_list):
                 for i in range(total_page_num):
                     params['page_num'] = i
                     res = requests.get(url, params=params)
-                    print(res.text)
                     for item in json.loads(res.text, strict=False)['results']:
                         if "telephone" in item:
                             # telephone = item['telephone']
@@ -120,8 +120,9 @@ def search_baidu_map_data(pro_list):
                     data_df['city_code'] = city_code
                     data_df['coun_code'] = coun_code
                     data_df['shop_type'] = pw
-                    inbo = dbmanager_baidu.save_baidu_phone(data_df, pw)
-                    print('save data area={},status={}'.format(area, inbo))
+                    data_df['s_type'] = 2
+                    inbo = dbmanager_baidu.save_baidu_phone(data_df, pw, 2)
+                    print('save data area={},shape={},status={}'.format(area, data_df.shape[0], inbo))
 
 
 def searchData_api_BD(pw, region):
@@ -279,13 +280,6 @@ def shop_phone_dzdp(shop_name, city, region):
 
 if __name__ == '__main__':
     pro_list = ['北京市', '江苏省', '上海市']
-    # deal_phone()
-    # print(len(set(df['phone'].tolist())))
-    search_baidu_map_data(pro_list)
-    # pw = '火锅'
-    # region = '南京市江宁区'
-    # searchData_api_BD(pw, region)
-    # shop_name = '围辣菌汤小火锅'
-    # city = '郑州市'
-    # region = '二七区'
-    # shop_phone_dzdp(shop_name, city, region)
+    pw_list = ['火锅', '烤鱼', '麻辣烫', '串串香', '小龙虾', '龙虾']
+    search_baidu_map_data(pro_list, pw_list)
+    deal_phone()

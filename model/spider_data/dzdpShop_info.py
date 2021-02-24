@@ -16,7 +16,7 @@ from lxml import etree
 from datetime import datetime
 from multiprocessing import Pool
 from model.spider_data import tools, conf
-from model.spider_data import baidu_data_map
+from model.spider_data import map_baidu
 from model.spider_data.dao import dbmanager_dzdp
 from model.spider_data.change_IP import change_ipdf, change_IP
 
@@ -24,7 +24,7 @@ headers = {
     'Host': 'www.dianping.com',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36 Edg/88.0.705.53',
     # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-    'Cookie': '_lxsdk=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; _lxsdk_cuid=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; s_ViewType=10; _hc.v=e5b4b74a-1b1f-54dd-2d0c-1b6cc0fc8055.1612425530; ua=Song%E5%93%A5; ctu=c6a16fefdaffcb0927e88c1a28a2fd7cbd59e65223c0b3bbdb009bc6e2f13ba9; aburl=1; cye=shouguang; cy=1150; fspop=test; dper=39655a07632153ab0e8278b5b4ec482b6f3b8a4dc2eb4b71c1cf737961af65d3391a774fa0c45b352a3e56a94a56ee0b975f938a89cbba61c1f7a8c0eb72d4290e5b5ab31d88ba6aa1374b518a9e82ac4b34091ab794d399890ce1d684fb3058; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1612918833,1613956134,1614041843,1614044056; dplet=c6a5d6f4c72ff2e3886a7c4bff6b309d; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1614048970; _lxsdk_s=177ccd0a161-3b6-843-c27%7C%7C51'
+    'Cookie': '_lxsdk=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; _lxsdk_cuid=177232c0259c8-0d4b57e89af59c8-51a2f73-100200-177232c025951; s_ViewType=10; _hc.v=e5b4b74a-1b1f-54dd-2d0c-1b6cc0fc8055.1612425530; ua=Song%E5%93%A5; ctu=c6a16fefdaffcb0927e88c1a28a2fd7cbd59e65223c0b3bbdb009bc6e2f13ba9; aburl=1; fspop=test; cy=1147; cye=gaomi; dper=39655a07632153ab0e8278b5b4ec482b18e915f855471c270c1f3f14afeb46a87531b61b2d1a45c0c6bdb0c7eb220ec15df267fc161ef7421ae375b7a047204051cacbae11bd0f8f521edbde97c73c031a5d92360aaf15d40a6f21cb709b765f; dplet=31b35a5c9a971ea5271657aa3f7a64e6; ll=7fd06e815b796be3df069dec7836c3df; Hm_lvt_602b80cf8079ae6591966cc70a3940e7=1614041843,1614044056,1614067113,1614132207; Hm_lpvt_602b80cf8079ae6591966cc70a3940e7=1614132349; _lxsdk_s=177d1c6da20-acf-32d-0ee%7C%7C57'
 }
 
 
@@ -99,7 +99,7 @@ def spider_info2():
             try:
                 # phone_list = phone_api(shop_id)
                 # phone_list = shop_infos(shop_url)
-                phone_list = baidu_data_map.shop_phone_dzdp(shop_name, city, region)
+                phone_list = map_baidu.shop_phone_dzdp(shop_name, city, region)
             except Exception as e:
                 print('异常：{}'.format(e))
             if phone_list:
