@@ -23,7 +23,7 @@ def get_info():
         print(df)
 
 
-def save_baidu_phone(data_df, pw):
+def save_baidu_phone(data_df, pw, s_type):
     '''
     存储百度手机号数据
     @return:
@@ -32,12 +32,12 @@ def save_baidu_phone(data_df, pw):
     if data_df.empty:
         print('plz check data')
         return False
-    table_name = conf.map_baidu_data_table
+    table_name = conf.gaodemap_baidu_data_table
     city_code = data_df['city_code'].tolist()[0]
     town_code = data_df['coun_code'].tolist()[0]
     # 删除旧数据
     sql = '''delete from {} where city_code='{}' and 
-    coun_code='{}' and shop_type='{}' '''.format(table_name, city_code, town_code, pw)
+    coun_code='{}' and shop_type='{}' and s_type={} '''.format(table_name, city_code, town_code, pw, s_type)
     del_bo = dbhandler.exec_sql(sql, table_name)
     if del_bo:
         data_df = data_df.where(data_df.notnull(), None)
@@ -99,6 +99,3 @@ def save_dzdp_phone_data(data_df):
     sql = dbhandler.con_insert_sql(data_df, table_name)
     in_bo = dbhandler.inser_many_date(sql, table_name, all_data)
     return in_bo
-
-
-
